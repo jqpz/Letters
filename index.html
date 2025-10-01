@@ -22,8 +22,9 @@
       console.log("Key pressed:", event.key);
 
       if (event.key === "Backspace") {
-        outputEl.textContent = outputEl.textContent.slice(0, -1);
+        outputEl.textContent = outputEl.textContent.slice(0, -2);
       } else {
+        outputEl.textContent += event.key;
         outputEl.textContent += event.key;
       }
     });
