@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>L3TT3R5</title>
+</head>
+<body>
+  <h1>I am typing!</h1>
+  <p>here</p>
+  <p>and over here :p </p>
+  <p>even here! ... you should try it too:</p>
+  <div id="userinout">
+    
+  </div>
+  <script>
+    // here .js stuff happens
+    console.log("cat: (=^･ω･^=) ");
+    const outputEl = document.getElementById("userinout");
+    
+    document.addEventListener("keydown", function(event) {
+      console.log("Key pressed:", event.key);
+
+      if (event.key === "Backspace") {
+        outputEl.textContent = outputEl.textContent.slice(0, -1);
+      } else {
+        outputEl.textContent += event.key;
+      }
+    });
+
+  </script>
+</body>
+</html>
