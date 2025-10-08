@@ -80,7 +80,10 @@
         <h1>Let's go on a Treasure Hunt!</h1>
         <p class="lead">Press any physical key to start. You must move one step at a time.</p>
       </div>
-
+      <div style="text-align:right;color:var(--muted);font-size:13px">
+        Treasure: <strong id="treasureHint">hidden</strong><br/>
+        Moves: <strong id="moves">0</strong>
+      </div>
     </header>
 
     <main class="game" id="game">
@@ -88,15 +91,12 @@
         <div class="meta" id="meta"></div>
         <div class="hint">Color = distance to treasure (closer → red)</div>
         <div class="centerKey" id="centerKey">—</div>
-        <div class="sub" id="subText">Press any key to start.</div>
+        <div class="sub" id="subText">Press any key to choose a starting key.</div>
       </div>
 
       <aside class="side" aria-hidden="false">
         <div>
-          <div class="section">
-            <div class="label">Last pressed key</div>
-            <div class="msg" id="lastKey">—</div>
-          </div>
+          
 
           <div class="section">
             <div class="label">Allowed next keys (press one)</div>
@@ -113,20 +113,14 @@
             <button class="btn" id="revealBtn">Reveal treasure</button>
             <button class="btn important" id="restartBtn">Restart (Enter)</button>
           </div>
-          <div class="footer">Only keyboard input is required. Space is supported.</div>
+          
         </div>
       </aside>
     </main>
   </div>
 
 <script>
-/*
-  Topf schlagen — keyboard-only implementation
-  - No on-screen keyboard. Show a color (distance), last pressed key, and allowed next keys (one-step neighbors).
-  - Accepts letters a-z and Space as keys.
-  - Start by pressing any allowed key (first press accepted). Subsequent presses must be one-step neighbors.
-  - Treasure is a random key from the set. Press Enter to restart.
-*/
+
 
 (function(){
   // QWERTY-like rows (letters). We include space as extra key.
@@ -149,10 +143,7 @@
       keyList.push(k);
     });
   });
-  // add space as a special key placed centered under the bottom row
-  keyPos[' '] = { x: 3.5, y: 3 };
-  keyList.push(' ');
-
+  
   // compute maximum distance between any two keys (for normalization)
   let maxDist = 1;
   (function calcMax(){
@@ -171,7 +162,7 @@
   const centerKeyEl = document.getElementById('centerKey');
   const subTextEl = document.getElementById('subText');
   const allowedRowEl = document.getElementById('allowedRow');
-  const lastKeyEl = document.getElementById('lastKey');
+
   const colorPanel = document.getElementById('colorPanel');
   const movesEl = document.getElementById('moves');
   const metaEl = document.getElementById('meta');
@@ -208,12 +199,6 @@
         neighbors.push(other);
       }
     }
-    // sort neighbors to present in deterministic order (space at end)
-    neighbors.sort((a,b)=>{
-      if(a === ' ') return 1;
-      if(b === ' ') return -1;
-      return a.localeCompare(b);
-    });
     return neighbors;
   }
 
@@ -234,7 +219,6 @@
     // update last key display
     if(selected == null){
       centerKeyEl.textContent = '—';
-      lastKeyEl.textContent = '—';
       subTextEl.textContent = 'Press any key to choose a starting key.';
       allowedRowEl.innerHTML = `<div class="chip">Any letter or Space</div>`;
       colorPanel.style.background = 'linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01))';
@@ -243,9 +227,8 @@
       return;
     }
 
-    const disp = selected === ' ' ? 'SPACE' : selected.toUpperCase();
+    const disp = selected.toUpperCase();
     centerKeyEl.textContent = disp;
-    lastKeyEl.textContent = disp;
 
     // compute distance
     const psel = keyPos[selected];
@@ -262,16 +245,12 @@
     // show allowed neighbors (one-step)
     const neighbors = getNeighbors(selected);
     allowedRowEl.innerHTML = '';
-    if(neighbors.length === 0){
-      // shouldn't happen, but safe
-      allowedRowEl.innerHTML = `<div class="chip">—</div>`;
-    } else {
+    
       for(const n of neighbors){
         const chip = document.createElement('div');
         chip.className = 'chip allowed' + (n===' ' ? ' space' : '');
         chip.textContent = n === ' ' ? 'SPACE' : n.toUpperCase();
         allowedRowEl.appendChild(chip);
-      }
     }
 
     // meta info
@@ -281,7 +260,7 @@
     if(selected === treasure){
       locked = true;
       // reveal and show celebration
-      treasureHint.textContent = selected === ' ' ? 'SPACE' : selected.toUpperCase();
+      treasureHint.textContent = selected.toUpperCase();
       showWin();
     } else {
       treasureHint.textContent = 'hidden';
@@ -294,20 +273,14 @@
     colorPanel.style.background = 'linear-gradient(180deg, #ffd166, #ff9f0a)';
     centerKeyEl.style.transform = 'scale(1.06) translateY(-6px)';
     subTextEl.textContent = '🎉 You found the treasure! Press Enter to restart.';
-    // small confetti-like text in warning area
-    warningArea.innerHTML = `<div style="padding:10px;border-radius:10px;background:linear-gradient(90deg,#fff4cc,#ffe6d0);color:#5a3300;font-weight:800">Treasure revealed: ${selected === ' ' ? 'SPACE' : selected.toUpperCase()}</div>`;
   }
 
-  function showWarning(msg){
-    warningArea.innerHTML = `<div class="warning">${msg}</div>`;
-    // clear after 1.2s
-    setTimeout(()=> {
-      if(!locked) warningArea.innerHTML = '';
-    }, 1200);
-  }
+
 
   // handle physical keyboard input
   window.addEventListener('keydown', (ev)=>{
+    let pressed = null;
+
     // ignore modifier keys
     if(ev.metaKey || ev.altKey || ev.ctrlKey) return;
 
@@ -318,21 +291,15 @@
       return;
     }
 
-    // accept Space explicitly
-    let pressed = null;
-    if(ev.code === 'Space' || ev.key === ' ' || ev.key === 'Spacebar'){
-      pressed = ' ';
-      ev.preventDefault();
+    // normalized single character keys
+    const k = (ev.key || '').toLowerCase();
+    if(k.length === 1 && k >= 'a' && k <= 'z'){
+      pressed = k;
     } else {
-      // normalized single character keys
-      const k = (ev.key || '').toLowerCase();
-      if(k.length === 1 && k >= 'a' && k <= 'z'){
-        pressed = k;
-      } else {
-        // ignore any other key
-        return;
-      }
+      // ignore any other key
+      return;
     }
+    
 
     // if game locked (already won) ignore further keys
     if(locked) {
@@ -340,7 +307,7 @@
       return;
     }
 
-    // if no selection yet, accept any valid pressed key as start
+    // if no selectiohn yet, accept any valid pressed key as start
     if(selected === null){
       selected = pressed;
       moveCount = 1;
@@ -354,24 +321,15 @@
       selected = pressed;
       moveCount += 1;
       updateUI();
-    } else {
-      // not allowed move
-      showWarning(`Not allowed — you can only press one of: ${allowed.map(x=>x===' ' ? 'SPACE' : x.toUpperCase()).join(', ')}`);
     }
   });
 
-  // reveal and restart buttons
-  revealBtn.addEventListener('click', ()=> {
-    alert('Treasure is: ' + (treasure === ' ' ? 'SPACE' : treasure.toUpperCase()));
-  });
-  restartBtn.addEventListener('click', restartGame);
 
   function restartGame(){
     pickRandomTreasure();
     selected = null;
     moveCount = 0;
     locked = false;
-    warningArea.innerHTML = '';
     treasureHint.textContent = 'hidden';
     centerKeyEl.style.transform = '';
     colorPanel.style.transition = 'background-color .24s linear, box-shadow .24s ease';
@@ -381,11 +339,6 @@
   // initialize
   pickRandomTreasure();
   updateUI();
-
-  // expose debug to console (optional)
-  window._topf = {
-    keyPos, keyList, getNeighbors, pickRandomTreasure
-  };
 
 })();
 </script>
