@@ -1,34 +1,366 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>L3TT3R5</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Topf Schlagen (Keyboard Treasure Hunt)</title>
+<style>
+  :root{
+    --key-size:56px;
+    --gap:8px;
+    --bg:#0f1724;
+    --card:#0b1220;
+    --text:#e6eef8;
+  }
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,#071428,#0b2132);font-family:Inter,system-ui,Segoe UI,Roboto,Arial;}
+  .wrap{max-width:980px;margin:28px auto;padding:22px;background:linear-gradient(180deg,#071428cc,#062335cc);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.6);}
+  h1{color:var(--text);margin:0 0 12px;font-size:24px}
+  p.lead{color:#bcd3ea;margin:6px 0 18px}
+  .board{position:relative;padding:20px;background:linear-gradient(180deg,#071428,#082334);border-radius:10px;display:flex;gap:18px;align-items:flex-start}
+  /* canvas sits behind keys */
+  #ringsCanvas{position:absolute;left:20px;right:20px;top:20px;bottom:20px;border-radius:8px;pointer-events:none;}
+  .keyboard{position:relative;z-index:2;display:flex;flex-direction:column;gap:10px;padding:18px;background:rgba(255,255,255,0.02);border-radius:8px;}
+  .row{display:flex;gap:var(--gap);align-items:center}
+  .key{
+    width:var(--key-size);
+    height:var(--key-size);
+    display:flex;align-items:center;justify-content:center;
+    border-radius:8px;border:1px solid rgba(255,255,255,0.06);
+    color:var(--text);font-weight:600;user-select:none;cursor:default;
+    box-shadow:0 2px 8px rgba(2,6,23,.5) inset;
+    transition:transform .08s ease, box-shadow .08s ease, background-color .15s linear;
+    font-size:16px;
+  }
+  .key.small{width:44px;height:44px;font-size:14px}
+  .key.space{width:calc(var(--key-size) * 6 + var(--gap) * 5)}
+  .key.selected{transform:translateY(-6px);box-shadow:0 10px 30px rgba(0,0,0,.6)}
+  .controls{color:#cfe6ff;margin-left:16px;max-width:300px}
+  .status{margin-top:12px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);color:#dff3ff}
+  .hint{opacity:.85;font-size:13px;margin-top:8px;color:#b8d7ff}
+  .buttons{display:flex;gap:8px;margin-top:12px}
+  button{background:#0f1728;color:#cfe6ff;border:1px solid rgba(255,255,255,0.05);padding:8px 12px;border-radius:8px;cursor:pointer}
+  .win{background:linear-gradient(90deg,#2fd675,#0ff);color:#092117;border:none}
+  footer{margin-top:14px;color:#9fbfe0;font-size:13px}
+  @media (max-width:700px){
+    .wrap{margin:12px}
+    .keyboard{transform:scale(.88);transform-origin:top left}
+  }
+</style>
 </head>
 <body>
-  <h1>I am typing!</h1>
-  <p>here</p>
-  <p>and over here :p </p>
-  <p>even here! ... you should try it too:</p>
-  <div id="userinout">
-    
+<div class="wrap" role="application" aria-label="Topf schlagen keyboard game">
+  <h1>Topf schlagen — keyboard treasure hunt</h1>
+  <p class="lead">Move with Arrow keys (or press any letter key). Press <strong>Space</strong> to strike (check). Press <strong>Enter</strong> to reset.</p>
+
+  <div class="board" id="board">
+    <canvas id="ringsCanvas"></canvas>
+
+    <div class="keyboard" id="keyboard" aria-hidden="false"></div>
+
+    <div class="controls">
+      <div class="status" id="status">Press any key to start. A random treasure key is hidden.</div>
+      <div class="hint" id="hint">Keys nearer the treasure get redder; far keys turn bluish. Hide the treasure — the color mapping is unknown to the player in the original game; here it's shown so you get feedback.</div>
+
+      <div class="buttons">
+        <button id="newBtn">New random treasure (Enter)</button>
+        <button id="revealBtn">Reveal treasure</button>
+      </div>
+
+      <footer>
+        Inspired by your sketches. Treasure is a single random key (letters only). Try to find it!
+      </footer>
+    </div>
   </div>
-  <script>
-    // here .js stuff happens
-    console.log("cat: (=^･ω･^=) ");
-    const outputEl = document.getElementById("userinout");
-    
-    document.addEventListener("keydown", function(event) {
-      console.log("Key pressed:", event.key);
+</div>
 
-      if (event.key === "Backspace") {
-        outputEl.textContent = outputEl.textContent.slice(0, -2);
-      } else {
-        outputEl.textContent += event.key;
-        outputEl.textContent += event.key;
-      }
+<script>
+/*
+ Topf Schlagen - JavaScript implementation
+ - Keyboard layout based on standard QWERTY (three rows of letters).
+ - Treasure is one random letter (a-z).
+ - Current selection moves with arrow keys (left/right/up/down).
+ - Press space to "hit". Enter = reset.
+ - Visual: each key colored by distance to treasure; concentric rings drawn behind.
+*/
+
+const rows = [
+  ['q','w','e','r','t','y','u','i','o','p'],
+  ['a','s','d','f','g','h','j','k','l'],
+  ['z','x','c','v','b','n','m']
+];
+
+// map each key to grid coordinates
+const keyPos = {};
+rows.forEach((r,ry) => r.forEach((k,kx) => keyPos[k]= {x:kx, y:ry}));
+
+// build UI
+const keyboardEl = document.getElementById('keyboard');
+const canvas = document.getElementById('ringsCanvas');
+const statusEl = document.getElementById('status');
+const newBtn = document.getElementById('newBtn');
+const revealBtn = document.getElementById('revealBtn');
+const board = document.getElementById('board');
+
+let selected = 'f';               // initial selection
+let treasure = null;
+let keyElements = {};             // map letter->DOM element
+let canvasCtx, dpr;
+let maxDist = 0;
+
+function createKeyboard(){
+  keyboardEl.innerHTML = '';
+  keyElements = {};
+  rows.forEach((r,ry) => {
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'row';
+    // left offset small for middle keys (visual)
+    if(ry===1) rowDiv.style.marginLeft = '30px';
+    if(ry===2) rowDiv.style.marginLeft = '60px';
+    r.forEach(k=>{
+      const el = document.createElement('div');
+      el.className = 'key';
+      el.textContent = k.toUpperCase();
+      el.dataset.key = k;
+      el.tabIndex = -1;
+      keyboardEl.appendChild(rowDiv);
+      rowDiv.appendChild(el);
+      keyElements[k]=el;
+      el.addEventListener('click', ()=> {
+        selectKey(k);
+      });
     });
+  });
+  // add space row under keyboard (visually)
+  const spaceRow = document.createElement('div');
+  spaceRow.className='row';
+  const sp = document.createElement('div');
+  sp.className='key space';
+  sp.textContent = 'SPACE';
+  sp.dataset.key = ' ';
+  sp.style.opacity = '0.6';
+  spaceRow.appendChild(sp);
+  keyboardEl.appendChild(spaceRow);
+}
 
-  </script>
+// calculate max possible distance (for color normalization)
+function computeMaxDist(){
+  // compute max Euclidean distance between any two keys
+  let md = 0;
+  const keys = Object.keys(keyPos);
+  for(let i=0;i<keys.length;i++){
+    for(let j=0;j<keys.length;j++){
+      const a=keyPos[keys[i]], b=keyPos[keys[j]];
+      const dx=a.x-b.x, dy=a.y-b.y;
+      md = Math.max(md, Math.hypot(dx,dy));
+    }
+  }
+  maxDist = md || 1;
+}
+
+// color interpolation between blue (far) and red (near)
+function colorForDistance(dist){
+  // normalized: 0 = at treasure (red), 1 = far (blue)
+  const t = Math.min(1, Math.max(0, dist / maxDist));
+  // We'll interpolate hue: red 0deg -> blue 220deg
+  const hue = (1 - t) * 0 + t * 220;
+  const sat = 70 + (1-t)*10; // a bit more saturated close
+  const light = 50 - t*8;
+  return `hsl(${hue}deg ${sat}% ${light}%)`;
+}
+
+function renderColorsAndRings(){
+  // size canvas to board area
+  const rect = board.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  canvasCtx.setTransform(dpr,0,0,dpr,0,0);
+  canvasCtx.clearRect(0,0,rect.width,rect.height);
+
+  // compute positions for keys in board coordinates
+  const keyCenters = {};
+  for(const k of Object.keys(keyElements)){
+    const el = keyElements[k];
+    const er = el.getBoundingClientRect();
+    // center relative to board
+    const br = board.getBoundingClientRect();
+    keyCenters[k] = {
+      x: er.left - br.left + er.width/2,
+      y: er.top - br.top + er.height/2
+    };
+  }
+
+  // draw concentric rings centered at treasure key
+  if(treasure && keyCenters[treasure]){
+    const center = keyCenters[treasure];
+    // draw rings: few red rings, then blue tints outward
+    const ringCount = 10;
+    for(let i=ringCount;i>0;i--){
+      const ratio = i / ringCount;
+      const r = (ratio) * 280;
+      const hue = (1 - ratio) * 10 + ratio * 220; // red->blue
+      const alpha = 0.08 * Math.pow(ratio, 0.9);
+      canvasCtx.beginPath();
+      canvasCtx.arc(center.x, center.y, r, 0, Math.PI*2);
+      canvasCtx.fillStyle = `hsla(${hue},70%,55%,${alpha})`;
+      canvasCtx.fill();
+    }
+  }
+
+  // color keys individually with colored background
+  for(const k of Object.keys(keyElements)){
+    const el = keyElements[k];
+    if(!keyPos[k]) continue;
+    // distance in keyboard grid coords
+    const a = keyPos[k];
+    const b = keyPos[treasure];
+    const dx = a.x - b.x, dy = a.y - b.y;
+    const dist = Math.hypot(dx,dy);
+    const color = colorForDistance(dist);
+    el.style.background = color;
+    el.style.borderColor = 'rgba(255,255,255,0.06)';
+    // highlight selection
+    if(k === selected){
+      el.classList.add('selected');
+      el.style.boxShadow = '0 8px 20px rgba(0,0,0,.6)';
+    } else {
+      el.classList.remove('selected');
+      el.style.boxShadow = '';
+    }
+  }
+}
+
+function selectKey(k){
+  // allow pressing ' ' (space) too
+  if(k === ' ') {
+    // keep selection at space
+    selected = ' ';
+    updateStatus();
+    renderColorsAndRings();
+    return;
+  }
+  if(!keyPos[k]) return;
+  selected = k;
+  updateStatus();
+  renderColorsAndRings();
+}
+
+function pressSpaceAction(){
+  if(selected === ' '){
+    // hitting on space: space cannot be treasure (we only pick letters). Notify.
+    statusEl.textContent = `You hit SPACE — the treasure is a letter, not space. Keep searching.`;
+    statusEl.style.background = '';
+    return;
+  }
+  if(selected === treasure){
+    statusEl.innerHTML = `🎉 <strong>Hit!</strong> You found the treasure at "${treasure.toUpperCase()}". Press Enter to play again.`;
+    statusEl.classList.add('win');
+    // visually pop the treasure key
+    if(keyElements[treasure]) {
+      keyElements[treasure].style.transform = 'translateY(-10px) scale(1.06)';
+      keyElements[treasure].style.boxShadow = '0 18px 40px rgba(0,0,0,.6)';
+    }
+  } else {
+    statusEl.textContent = `Miss! You struck "${selected.toUpperCase()}". Keep searching.`;
+    statusEl.classList.remove('win');
+  }
+}
+
+function updateStatus(){
+  if(selected === ' '){
+    statusEl.textContent = `Selected: SPACE. Press Space to hit the pot.`;
+  } else {
+    statusEl.textContent = `Selected: "${selected.toUpperCase()}". Press Space to hit the pot. Move with Arrow keys or press letters to jump.`;
+  }
+  statusEl.classList.remove('win');
+}
+
+function randomTreasure(){
+  const letters = Object.keys(keyPos);
+  treasure = letters[Math.floor(Math.random()*letters.length)];
+  // ensure selected is a letter; if not, set to 'f'
+  if(!keyPos[selected]) selected = 'f';
+  updateStatus();
+  renderColorsAndRings();
+}
+
+function onArrowMove(dx,dy){
+  // if selection is space treat selected as 'f' to move from middle
+  let cur = selected;
+  if(cur === ' ') cur = 'v'; // pick a sensible start
+  if(!keyPos[cur]) return;
+  const pos = {x:keyPos[cur].x, y:keyPos[cur].y};
+  const targetY = pos.y + dy;
+  let targetX = pos.x + dx;
+  // clamp within rows length - but when moving up/down might need to adjust column to nearest in target row
+  const newRow = rows[targetY];
+  if(!newRow){
+    // invalid move
+    return;
+  }
+  // If targetX out of range, clamp nearest
+  if(targetX < 0) targetX = 0;
+  if(targetX > newRow.length-1) targetX = newRow.length-1;
+  // choose candidate key at (targetY,targetX)
+  const candidate = newRow[targetX];
+  if(candidate) selectKey(candidate);
+}
+
+document.addEventListener('keydown', (ev)=>{
+  if(ev.key === 'ArrowLeft'){ ev.preventDefault(); onArrowMove(-1,0); }
+  else if(ev.key === 'ArrowRight'){ ev.preventDefault(); onArrowMove(1,0); }
+  else if(ev.key === 'ArrowUp'){ ev.preventDefault(); onArrowMove(0,-1); }
+  else if(ev.key === 'ArrowDown'){ ev.preventDefault(); onArrowMove(0,1); }
+  else if(ev.key === ' '){ ev.preventDefault(); pressSpaceAction(); }
+  else if(ev.key === 'Enter'){ ev.preventDefault(); startNewGame(); }
+  else {
+    // if letter key pressed, jump selection
+    const k = ev.key.toLowerCase();
+    if(k.length === 1 && keyPos[k]){
+      selectKey(k);
+    }
+  }
+});
+
+newBtn.addEventListener('click', startNewGame);
+revealBtn.addEventListener('click', ()=>{
+  alert('Treasure is at: ' + treasure.toUpperCase());
+});
+
+// initialize canvas and layout
+function setupCanvas(){
+  dpr = window.devicePixelRatio || 1;
+  canvasCtx = canvas.getContext('2d');
+}
+
+function startNewGame(){
+  // reset styles
+  for(const k in keyElements){
+    keyElements[k].style.transform='';
+    keyElements[k].style.boxShadow='';
+  }
+  randomTreasure();
+  statusEl.classList.remove('win');
+  statusEl.style.background = '';
+}
+
+// adjust rendering on resize
+window.addEventListener('resize', ()=> {
+  renderColorsAndRings();
+});
+
+// build UI
+createKeyboard();
+setupCanvas();
+computeMaxDist();
+randomTreasure();
+renderColorsAndRings();
+updateStatus();
+
+// first selection highlight
+selectKey(selected);
+
+</script>
 </body>
 </html>
