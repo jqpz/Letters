@@ -79,6 +79,8 @@
       <div>
         <h1>Let's go on a Treasure Hunt!</h1>
         <p class="lead">Press any physical key to start. You must move one step at a time.</p>
+        <p class="lead"> Color = distance to treasure (closer → red)</p>
+
       </div>
       <div style="text-align:right;color:var(--muted);font-size:13px">
         Treasure: <strong id="treasureHint">hidden</strong><br/>
@@ -89,13 +91,13 @@
     <main class="game" id="game">
       <div class="colorPanel" id="colorPanel" aria-live="polite">
         <div class="meta" id="meta"></div>
-        <div class="hint">Color = distance to treasure (closer → red)</div>
+        <div class="hint"></div>
         <div class="centerKey" id="centerKey">—</div>
         <div class="sub" id="subText">Press any key to choose a starting key.</div>
       </div>
 
       <aside class="side" aria-hidden="false">
-        <div>
+        
           
 
           <div class="section">
@@ -105,16 +107,10 @@
             </div>
           </div>
 
-          <div id="warningArea" style="min-height:36px"></div>
-        </div>
-
-        <div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <button class="btn" id="revealBtn">Reveal treasure</button>
-            <button class="btn important" id="restartBtn">Restart (Enter)</button>
-          </div>
           
-        </div>
+        
+
+
       </aside>
     </main>
   </div>
@@ -166,11 +162,7 @@
   const colorPanel = document.getElementById('colorPanel');
   const movesEl = document.getElementById('moves');
   const metaEl = document.getElementById('meta');
-  const warningArea = document.getElementById('warningArea');
-  const treasureHint = document.getElementById('treasureHint');
-  const restartBtn = document.getElementById('restartBtn');
-  const revealBtn = document.getElementById('revealBtn');
-
+  
   // game state
   let treasure = null;       // key that is treasure
   let selected = null;       // current selected key (last pressed)
@@ -223,7 +215,6 @@
       allowedRowEl.innerHTML = `<div class="chip">Any letter or Space</div>`;
       colorPanel.style.background = 'linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01))';
       metaEl.textContent = `Treasure: hidden`;
-      treasureHint.textContent = 'hidden';
       return;
     }
 
@@ -240,7 +231,7 @@
     colorPanel.style.background = `linear-gradient(180deg, ${col}, rgba(0,0,0,0.08))`;
     colorPanel.style.boxShadow = `inset 0 8px 40px rgba(0,0,0,.45), 0 10px 40px rgba(0,0,0,.25)`;
 
-    subTextEl.textContent = `Distance: ${dist.toFixed(2)} (normalized ${(dist/maxDist).toFixed(2)})`;
+    subTextEl.textContent = ``;
 
     // show allowed neighbors (one-step)
     const neighbors = getNeighbors(selected);
@@ -248,8 +239,8 @@
     
       for(const n of neighbors){
         const chip = document.createElement('div');
-        chip.className = 'chip allowed' + (n===' ' ? ' space' : '');
-        chip.textContent = n === ' ' ? 'SPACE' : n.toUpperCase();
+        chip.className = 'chip allowed';
+        chip.textContent = n.toUpperCase();
         allowedRowEl.appendChild(chip);
     }
 
@@ -262,20 +253,13 @@
       // reveal and show celebration
       treasureHint.textContent = selected.toUpperCase();
       showWin();
-    } else {
-      treasureHint.textContent = 'hidden';
     }
   }
 
   function showWin(){
-    // quick visual flash
-    colorPanel.style.transition = 'background-color .12s linear, transform .18s ease';
-    colorPanel.style.background = 'linear-gradient(180deg, #ffd166, #ff9f0a)';
-    centerKeyEl.style.transform = 'scale(1.06) translateY(-6px)';
+    colorPanel.style.background = 'linear-gradient(180deg, #ff4d4d, #ff0000)';
     subTextEl.textContent = '🎉 You found the treasure! Press Enter to restart.';
   }
-
-
 
   // handle physical keyboard input
   window.addEventListener('keydown', (ev)=>{
@@ -323,7 +307,6 @@
       updateUI();
     }
   });
-
 
   function restartGame(){
     pickRandomTreasure();
