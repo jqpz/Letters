@@ -1,366 +1,396 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Topf Schlagen (Keyboard Treasure Hunt)</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Topf schlagen — keyboard-only</title>
 <style>
   :root{
-    --key-size:56px;
-    --gap:8px;
-    --bg:#0f1724;
-    --card:#0b1220;
-    --text:#e6eef8;
+    --bg:#071428;
+    --fg:#dff3ff;
+    --muted:#9fbfe0;
+    --panel-radius:18px;
   }
-  html,body{height:100%;margin:0;background:linear-gradient(180deg,#071428,#0b2132);font-family:Inter,system-ui,Segoe UI,Roboto,Arial;}
-  .wrap{max-width:980px;margin:28px auto;padding:22px;background:linear-gradient(180deg,#071428cc,#062335cc);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.6);}
-  h1{color:var(--text);margin:0 0 12px;font-size:24px}
-  p.lead{color:#bcd3ea;margin:6px 0 18px}
-  .board{position:relative;padding:20px;background:linear-gradient(180deg,#071428,#082334);border-radius:10px;display:flex;gap:18px;align-items:flex-start}
-  /* canvas sits behind keys */
-  #ringsCanvas{position:absolute;left:20px;right:20px;top:20px;bottom:20px;border-radius:8px;pointer-events:none;}
-  .keyboard{position:relative;z-index:2;display:flex;flex-direction:column;gap:10px;padding:18px;background:rgba(255,255,255,0.02);border-radius:8px;}
-  .row{display:flex;gap:var(--gap);align-items:center}
-  .key{
-    width:var(--key-size);
-    height:var(--key-size);
-    display:flex;align-items:center;justify-content:center;
-    border-radius:8px;border:1px solid rgba(255,255,255,0.06);
-    color:var(--text);font-weight:600;user-select:none;cursor:default;
-    box-shadow:0 2px 8px rgba(2,6,23,.5) inset;
-    transition:transform .08s ease, box-shadow .08s ease, background-color .15s linear;
-    font-size:16px;
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#051026,#082033);color:var(--fg);}
+  .wrap{max-width:820px;margin:28px auto;padding:22px;border-radius:16px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 10px 40px rgba(2,6,23,.6);}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  h1{margin:0;font-size:20px}
+  p.lead{margin:6px 0 14px;color:var(--muted);font-size:14px}
+  .game{
+    display:grid;
+    grid-template-columns: 1fr 320px;
+    gap:18px;align-items:start;
   }
-  .key.small{width:44px;height:44px;font-size:14px}
-  .key.space{width:calc(var(--key-size) * 6 + var(--gap) * 5)}
-  .key.selected{transform:translateY(-6px);box-shadow:0 10px 30px rgba(0,0,0,.6)}
-  .controls{color:#cfe6ff;margin-left:16px;max-width:300px}
-  .status{margin-top:12px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);color:#dff3ff}
-  .hint{opacity:.85;font-size:13px;margin-top:8px;color:#b8d7ff}
-  .buttons{display:flex;gap:8px;margin-top:12px}
-  button{background:#0f1728;color:#cfe6ff;border:1px solid rgba(255,255,255,0.05);padding:8px 12px;border-radius:8px;cursor:pointer}
-  .win{background:linear-gradient(90deg,#2fd675,#0ff);color:#092117;border:none}
-  footer{margin-top:14px;color:#9fbfe0;font-size:13px}
-  @media (max-width:700px){
-    .wrap{margin:12px}
-    .keyboard{transform:scale(.88);transform-origin:top left}
+
+  /* the big color panel */
+  .colorPanel{
+    height:360px;border-radius:var(--panel-radius);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    transition:background-color .24s linear, box-shadow .24s ease; position:relative; overflow:hidden;
+    box-shadow: inset 0 8px 30px rgba(0,0,0,.45);
+  }
+  .centerKey{
+    font-size:92px;font-weight:800;letter-spacing:4px;color:rgba(255,255,255,0.95);text-shadow:0 8px 30px rgba(0,0,0,.5);
+    transition:transform .18s ease;
+  }
+  .sub{
+    margin-top:8px;color:rgba(255,255,255,0.9);font-weight:600;font-size:16px;
+  }
+  .meta{
+    position:absolute;left:14px;top:14px;color:rgba(255,255,255,0.85);font-weight:600;font-size:13px;
+  }
+  .hint{
+    position:absolute;right:14px;top:14px;color:rgba(255,255,255,0.7);font-size:13px;
+  }
+
+  /* side panel */
+  .side{
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    padding:16px;border-radius:12px;height:360px;box-shadow:0 6px 24px rgba(0,0,0,.45);display:flex;flex-direction:column;justify-content:space-between;
+  }
+  .section{margin-bottom:12px}
+  .label{color:var(--muted);font-size:13px;margin-bottom:8px}
+  .allowedRow{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.03);font-weight:700; min-width:44px;text-align:center;
+    box-shadow: inset 0 -2px 6px rgba(0,0,0,.3);
+    transition:transform .12s ease, background .16s ease;
+    user-select:none;
+  }
+  .chip.allowed{background:rgba(255,255,255,0.08);cursor:default}
+  .chip.space{min-width:78px}
+  .msg{padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);color:var(--muted);font-size:13px}
+  .controls{display:flex;gap:8px;align-items:center}
+  .btn{padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);cursor:pointer;color:var(--fg)}
+  .btn.important{background:linear-gradient(90deg,#2fd675,#06f2a6);color:#04211a;border:none}
+  .footer{color:var(--muted);font-size:13px;text-align:center;margin-top:8px}
+
+  .warning{color:#ffd9d9;background:rgba(255,12,12,0.06);padding:8px;border-radius:8px;margin-top:8px;font-weight:700}
+
+  @media (max-width:900px){
+    .game{grid-template-columns:1fr}
+    .side{height:auto}
+    .colorPanel{height:320px}
   }
 </style>
 </head>
 <body>
-<div class="wrap" role="application" aria-label="Topf schlagen keyboard game">
-  <h1>Topf schlagen — keyboard treasure hunt</h1>
-  <p class="lead">Move with Arrow keys (or press any letter key). Press <strong>Space</strong> to strike (check). Press <strong>Enter</strong> to reset.</p>
+  <div class="wrap" role="application" aria-label="Topf schlagen keyboard-only">
+    <header>
+      <div>
+        <h1>Topf schlagen — keyboard-only</h1>
+        <p class="lead">Press any physical key to start. You must move one step at a time — only the allowed next keys (shown) will be accepted.</p>
+      </div>
+      <div style="text-align:right;color:var(--muted);font-size:13px">
+        Treasure: <strong id="treasureHint">hidden</strong><br/>
+        Moves: <strong id="moves">0</strong>
+      </div>
+    </header>
 
-  <div class="board" id="board">
-    <canvas id="ringsCanvas"></canvas>
-
-    <div class="keyboard" id="keyboard" aria-hidden="false"></div>
-
-    <div class="controls">
-      <div class="status" id="status">Press any key to start. A random treasure key is hidden.</div>
-      <div class="hint" id="hint">Keys nearer the treasure get redder; far keys turn bluish. Hide the treasure — the color mapping is unknown to the player in the original game; here it's shown so you get feedback.</div>
-
-      <div class="buttons">
-        <button id="newBtn">New random treasure (Enter)</button>
-        <button id="revealBtn">Reveal treasure</button>
+    <main class="game" id="game">
+      <div class="colorPanel" id="colorPanel" aria-live="polite">
+        <div class="meta" id="meta"></div>
+        <div class="hint">Color = distance to treasure (closer → red)</div>
+        <div class="centerKey" id="centerKey">—</div>
+        <div class="sub" id="subText">Press any key to choose a starting key.</div>
       </div>
 
-      <footer>
-        Inspired by your sketches. Treasure is a single random key (letters only). Try to find it!
-      </footer>
-    </div>
+      <aside class="side" aria-hidden="false">
+        <div>
+          <div class="section">
+            <div class="label">Last pressed key</div>
+            <div class="msg" id="lastKey">—</div>
+          </div>
+
+          <div class="section">
+            <div class="label">Allowed next keys (press one)</div>
+            <div class="allowedRow" id="allowedRow">
+              <!-- chips inserted here -->
+            </div>
+          </div>
+
+          <div id="warningArea" style="min-height:36px"></div>
+        </div>
+
+        <div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn" id="revealBtn">Reveal treasure</button>
+            <button class="btn important" id="restartBtn">Restart (Enter)</button>
+          </div>
+          <div class="footer">Only keyboard input is required. Space is supported.</div>
+        </div>
+      </aside>
+    </main>
   </div>
-</div>
 
 <script>
 /*
- Topf Schlagen - JavaScript implementation
- - Keyboard layout based on standard QWERTY (three rows of letters).
- - Treasure is one random letter (a-z).
- - Current selection moves with arrow keys (left/right/up/down).
- - Press space to "hit". Enter = reset.
- - Visual: each key colored by distance to treasure; concentric rings drawn behind.
+  Topf schlagen — keyboard-only implementation
+  - No on-screen keyboard. Show a color (distance), last pressed key, and allowed next keys (one-step neighbors).
+  - Accepts letters a-z and Space as keys.
+  - Start by pressing any allowed key (first press accepted). Subsequent presses must be one-step neighbors.
+  - Treasure is a random key from the set. Press Enter to restart.
 */
 
-const rows = [
-  ['q','w','e','r','t','y','u','i','o','p'],
-  ['a','s','d','f','g','h','j','k','l'],
-  ['z','x','c','v','b','n','m']
-];
+(function(){
+  // QWERTY-like rows (letters). We include space as extra key.
+  const rows = [
+    ['q','w','e','r','t','y','u','i','o','p'],
+    ['a','s','d','f','g','h','j','k','l'],
+    ['z','x','c','v','b','n','m']
+  ];
 
-// map each key to grid coordinates
-const keyPos = {};
-rows.forEach((r,ry) => r.forEach((k,kx) => keyPos[k]= {x:kx, y:ry}));
+  // We'll create key positions in a 2D coordinate system (x = column + offset[row], y = row)
+  // Offsets approximate physical keyboard staggering
+  const rowOffsets = [0, 0.5, 1.0];
 
-// build UI
-const keyboardEl = document.getElementById('keyboard');
-const canvas = document.getElementById('ringsCanvas');
-const statusEl = document.getElementById('status');
-const newBtn = document.getElementById('newBtn');
-const revealBtn = document.getElementById('revealBtn');
-const board = document.getElementById('board');
-
-let selected = 'f';               // initial selection
-let treasure = null;
-let keyElements = {};             // map letter->DOM element
-let canvasCtx, dpr;
-let maxDist = 0;
-
-function createKeyboard(){
-  keyboardEl.innerHTML = '';
-  keyElements = {};
-  rows.forEach((r,ry) => {
-    const rowDiv = document.createElement('div');
-    rowDiv.className = 'row';
-    // left offset small for middle keys (visual)
-    if(ry===1) rowDiv.style.marginLeft = '30px';
-    if(ry===2) rowDiv.style.marginLeft = '60px';
-    r.forEach(k=>{
-      const el = document.createElement('div');
-      el.className = 'key';
-      el.textContent = k.toUpperCase();
-      el.dataset.key = k;
-      el.tabIndex = -1;
-      keyboardEl.appendChild(rowDiv);
-      rowDiv.appendChild(el);
-      keyElements[k]=el;
-      el.addEventListener('click', ()=> {
-        selectKey(k);
-      });
+  // Build key position map and list of valid keys (letters + space)
+  const keyPos = {};
+  const keyList = [];
+  rows.forEach((r, ry) => {
+    r.forEach((k, kx) => {
+      keyPos[k] = { x: kx + rowOffsets[ry], y: ry };
+      keyList.push(k);
     });
   });
-  // add space row under keyboard (visually)
-  const spaceRow = document.createElement('div');
-  spaceRow.className='row';
-  const sp = document.createElement('div');
-  sp.className='key space';
-  sp.textContent = 'SPACE';
-  sp.dataset.key = ' ';
-  sp.style.opacity = '0.6';
-  spaceRow.appendChild(sp);
-  keyboardEl.appendChild(spaceRow);
-}
+  // add space as a special key placed centered under the bottom row
+  keyPos[' '] = { x: 3.5, y: 3 };
+  keyList.push(' ');
 
-// calculate max possible distance (for color normalization)
-function computeMaxDist(){
-  // compute max Euclidean distance between any two keys
-  let md = 0;
-  const keys = Object.keys(keyPos);
-  for(let i=0;i<keys.length;i++){
-    for(let j=0;j<keys.length;j++){
-      const a=keyPos[keys[i]], b=keyPos[keys[j]];
-      const dx=a.x-b.x, dy=a.y-b.y;
-      md = Math.max(md, Math.hypot(dx,dy));
+  // compute maximum distance between any two keys (for normalization)
+  let maxDist = 1;
+  (function calcMax(){
+    let md = 0;
+    for(let a of keyList){
+      for(let b of keyList){
+        const pa = keyPos[a], pb = keyPos[b];
+        const d = Math.hypot(pa.x - pb.x, pa.y - pb.y);
+        if(d > md) md = d;
+      }
     }
-  }
-  maxDist = md || 1;
-}
+    maxDist = md || 1;
+  })();
 
-// color interpolation between blue (far) and red (near)
-function colorForDistance(dist){
-  // normalized: 0 = at treasure (red), 1 = far (blue)
-  const t = Math.min(1, Math.max(0, dist / maxDist));
-  // We'll interpolate hue: red 0deg -> blue 220deg
-  const hue = (1 - t) * 0 + t * 220;
-  const sat = 70 + (1-t)*10; // a bit more saturated close
-  const light = 50 - t*8;
-  return `hsl(${hue}deg ${sat}% ${light}%)`;
-}
+  // DOM refs
+  const centerKeyEl = document.getElementById('centerKey');
+  const subTextEl = document.getElementById('subText');
+  const allowedRowEl = document.getElementById('allowedRow');
+  const lastKeyEl = document.getElementById('lastKey');
+  const colorPanel = document.getElementById('colorPanel');
+  const movesEl = document.getElementById('moves');
+  const metaEl = document.getElementById('meta');
+  const warningArea = document.getElementById('warningArea');
+  const treasureHint = document.getElementById('treasureHint');
+  const restartBtn = document.getElementById('restartBtn');
+  const revealBtn = document.getElementById('revealBtn');
 
-function renderColorsAndRings(){
-  // size canvas to board area
-  const rect = board.getBoundingClientRect();
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  canvas.style.width = rect.width + 'px';
-  canvas.style.height = rect.height + 'px';
-  canvasCtx.setTransform(dpr,0,0,dpr,0,0);
-  canvasCtx.clearRect(0,0,rect.width,rect.height);
+  // game state
+  let treasure = null;       // key that is treasure
+  let selected = null;       // current selected key (last pressed)
+  let moveCount = 0;
+  let locked = false;        // true after win until restart
 
-  // compute positions for keys in board coordinates
-  const keyCenters = {};
-  for(const k of Object.keys(keyElements)){
-    const el = keyElements[k];
-    const er = el.getBoundingClientRect();
-    // center relative to board
-    const br = board.getBoundingClientRect();
-    keyCenters[k] = {
-      x: er.left - br.left + er.width/2,
-      y: er.top - br.top + er.height/2
-    };
+  // choose random treasure
+  function pickRandomTreasure(){
+    const idx = Math.floor(Math.random() * keyList.length);
+    treasure = keyList[idx];
   }
 
-  // draw concentric rings centered at treasure key
-  if(treasure && keyCenters[treasure]){
-    const center = keyCenters[treasure];
-    // draw rings: few red rings, then blue tints outward
-    const ringCount = 10;
-    for(let i=ringCount;i>0;i--){
-      const ratio = i / ringCount;
-      const r = (ratio) * 280;
-      const hue = (1 - ratio) * 10 + ratio * 220; // red->blue
-      const alpha = 0.08 * Math.pow(ratio, 0.9);
-      canvasCtx.beginPath();
-      canvasCtx.arc(center.x, center.y, r, 0, Math.PI*2);
-      canvasCtx.fillStyle = `hsla(${hue},70%,55%,${alpha})`;
-      canvasCtx.fill();
+  // compute neighbors: one-step keys from 'k' (diagonals allowed)
+  function getNeighbors(k){
+    if(!keyPos[k]) return [];
+    const p = keyPos[k];
+    const neighbors = [];
+    for(const other of keyList){
+      if(other === k) continue;
+      const q = keyPos[other];
+      const dx = Math.abs(p.x - q.x);
+      const dy = Math.abs(p.y - q.y);
+      // threshold tuned to include direct and diagonal neighbors, include space where appropriate
+      // allow neighbors where Euclidean distance <= 1.45 (this captures adjacent keys)
+      if(Math.hypot(dx,dy) <= 1.45){
+        neighbors.push(other);
+      }
     }
+    // sort neighbors to present in deterministic order (space at end)
+    neighbors.sort((a,b)=>{
+      if(a === ' ') return 1;
+      if(b === ' ') return -1;
+      return a.localeCompare(b);
+    });
+    return neighbors;
   }
 
-  // color keys individually with colored background
-  for(const k of Object.keys(keyElements)){
-    const el = keyElements[k];
-    if(!keyPos[k]) continue;
-    // distance in keyboard grid coords
-    const a = keyPos[k];
-    const b = keyPos[treasure];
-    const dx = a.x - b.x, dy = a.y - b.y;
-    const dist = Math.hypot(dx,dy);
-    const color = colorForDistance(dist);
-    el.style.background = color;
-    el.style.borderColor = 'rgba(255,255,255,0.06)';
-    // highlight selection
-    if(k === selected){
-      el.classList.add('selected');
-      el.style.boxShadow = '0 8px 20px rgba(0,0,0,.6)';
+  // color mapping: distance -> hue (0 = red near, 220 = blue far)
+  function colorForDistance(dist){
+    const t = Math.min(1, Math.max(0, dist / maxDist));
+    const hue = (1 - t) * 0 + t * 220; // 0 (red) -> 220 (blue)
+    const sat = 72 + (1 - t) * 8;
+    const light = 52 - t * 6;
+    return `hsl(${hue} ${sat}% ${light}%)`;
+  }
+
+  // update UI based on selected (last pressed)
+  function updateUI(){
+    // moves count
+    movesEl.textContent = String(moveCount);
+
+    // update last key display
+    if(selected == null){
+      centerKeyEl.textContent = '—';
+      lastKeyEl.textContent = '—';
+      subTextEl.textContent = 'Press any key to choose a starting key.';
+      allowedRowEl.innerHTML = `<div class="chip">Any letter or Space</div>`;
+      colorPanel.style.background = 'linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01))';
+      metaEl.textContent = `Treasure: hidden`;
+      treasureHint.textContent = 'hidden';
+      return;
+    }
+
+    const disp = selected === ' ' ? 'SPACE' : selected.toUpperCase();
+    centerKeyEl.textContent = disp;
+    lastKeyEl.textContent = disp;
+
+    // compute distance
+    const psel = keyPos[selected];
+    const pt = keyPos[treasure];
+    const dist = Math.hypot(psel.x - pt.x, psel.y - pt.y);
+
+    // color
+    const col = colorForDistance(dist);
+    colorPanel.style.background = `linear-gradient(180deg, ${col}, rgba(0,0,0,0.08))`;
+    colorPanel.style.boxShadow = `inset 0 8px 40px rgba(0,0,0,.45), 0 10px 40px rgba(0,0,0,.25)`;
+
+    subTextEl.textContent = `Distance: ${dist.toFixed(2)} (normalized ${(dist/maxDist).toFixed(2)})`;
+
+    // show allowed neighbors (one-step)
+    const neighbors = getNeighbors(selected);
+    allowedRowEl.innerHTML = '';
+    if(neighbors.length === 0){
+      // shouldn't happen, but safe
+      allowedRowEl.innerHTML = `<div class="chip">—</div>`;
     } else {
-      el.classList.remove('selected');
-      el.style.boxShadow = '';
+      for(const n of neighbors){
+        const chip = document.createElement('div');
+        chip.className = 'chip allowed' + (n===' ' ? ' space' : '');
+        chip.textContent = n === ' ' ? 'SPACE' : n.toUpperCase();
+        allowedRowEl.appendChild(chip);
+      }
+    }
+
+    // meta info
+    metaEl.textContent = `Moves: ${moveCount}`;
+
+    // win check
+    if(selected === treasure){
+      locked = true;
+      // reveal and show celebration
+      treasureHint.textContent = selected === ' ' ? 'SPACE' : selected.toUpperCase();
+      showWin();
+    } else {
+      treasureHint.textContent = 'hidden';
     }
   }
-}
 
-function selectKey(k){
-  // allow pressing ' ' (space) too
-  if(k === ' ') {
-    // keep selection at space
-    selected = ' ';
-    updateStatus();
-    renderColorsAndRings();
-    return;
+  function showWin(){
+    // quick visual flash
+    colorPanel.style.transition = 'background-color .12s linear, transform .18s ease';
+    colorPanel.style.background = 'linear-gradient(180deg, #ffd166, #ff9f0a)';
+    centerKeyEl.style.transform = 'scale(1.06) translateY(-6px)';
+    subTextEl.textContent = '🎉 You found the treasure! Press Enter to restart.';
+    // small confetti-like text in warning area
+    warningArea.innerHTML = `<div style="padding:10px;border-radius:10px;background:linear-gradient(90deg,#fff4cc,#ffe6d0);color:#5a3300;font-weight:800">Treasure revealed: ${selected === ' ' ? 'SPACE' : selected.toUpperCase()}</div>`;
   }
-  if(!keyPos[k]) return;
-  selected = k;
-  updateStatus();
-  renderColorsAndRings();
-}
 
-function pressSpaceAction(){
-  if(selected === ' '){
-    // hitting on space: space cannot be treasure (we only pick letters). Notify.
-    statusEl.textContent = `You hit SPACE — the treasure is a letter, not space. Keep searching.`;
-    statusEl.style.background = '';
-    return;
+  function showWarning(msg){
+    warningArea.innerHTML = `<div class="warning">${msg}</div>`;
+    // clear after 1.2s
+    setTimeout(()=> {
+      if(!locked) warningArea.innerHTML = '';
+    }, 1200);
   }
-  if(selected === treasure){
-    statusEl.innerHTML = `🎉 <strong>Hit!</strong> You found the treasure at "${treasure.toUpperCase()}". Press Enter to play again.`;
-    statusEl.classList.add('win');
-    // visually pop the treasure key
-    if(keyElements[treasure]) {
-      keyElements[treasure].style.transform = 'translateY(-10px) scale(1.06)';
-      keyElements[treasure].style.boxShadow = '0 18px 40px rgba(0,0,0,.6)';
+
+  // handle physical keyboard input
+  window.addEventListener('keydown', (ev)=>{
+    // ignore modifier keys
+    if(ev.metaKey || ev.altKey || ev.ctrlKey) return;
+
+    // restart on Enter
+    if(ev.key === 'Enter'){
+      ev.preventDefault();
+      restartGame();
+      return;
     }
-  } else {
-    statusEl.textContent = `Miss! You struck "${selected.toUpperCase()}". Keep searching.`;
-    statusEl.classList.remove('win');
-  }
-}
 
-function updateStatus(){
-  if(selected === ' '){
-    statusEl.textContent = `Selected: SPACE. Press Space to hit the pot.`;
-  } else {
-    statusEl.textContent = `Selected: "${selected.toUpperCase()}". Press Space to hit the pot. Move with Arrow keys or press letters to jump.`;
-  }
-  statusEl.classList.remove('win');
-}
-
-function randomTreasure(){
-  const letters = Object.keys(keyPos);
-  treasure = letters[Math.floor(Math.random()*letters.length)];
-  // ensure selected is a letter; if not, set to 'f'
-  if(!keyPos[selected]) selected = 'f';
-  updateStatus();
-  renderColorsAndRings();
-}
-
-function onArrowMove(dx,dy){
-  // if selection is space treat selected as 'f' to move from middle
-  let cur = selected;
-  if(cur === ' ') cur = 'v'; // pick a sensible start
-  if(!keyPos[cur]) return;
-  const pos = {x:keyPos[cur].x, y:keyPos[cur].y};
-  const targetY = pos.y + dy;
-  let targetX = pos.x + dx;
-  // clamp within rows length - but when moving up/down might need to adjust column to nearest in target row
-  const newRow = rows[targetY];
-  if(!newRow){
-    // invalid move
-    return;
-  }
-  // If targetX out of range, clamp nearest
-  if(targetX < 0) targetX = 0;
-  if(targetX > newRow.length-1) targetX = newRow.length-1;
-  // choose candidate key at (targetY,targetX)
-  const candidate = newRow[targetX];
-  if(candidate) selectKey(candidate);
-}
-
-document.addEventListener('keydown', (ev)=>{
-  if(ev.key === 'ArrowLeft'){ ev.preventDefault(); onArrowMove(-1,0); }
-  else if(ev.key === 'ArrowRight'){ ev.preventDefault(); onArrowMove(1,0); }
-  else if(ev.key === 'ArrowUp'){ ev.preventDefault(); onArrowMove(0,-1); }
-  else if(ev.key === 'ArrowDown'){ ev.preventDefault(); onArrowMove(0,1); }
-  else if(ev.key === ' '){ ev.preventDefault(); pressSpaceAction(); }
-  else if(ev.key === 'Enter'){ ev.preventDefault(); startNewGame(); }
-  else {
-    // if letter key pressed, jump selection
-    const k = ev.key.toLowerCase();
-    if(k.length === 1 && keyPos[k]){
-      selectKey(k);
+    // accept Space explicitly
+    let pressed = null;
+    if(ev.code === 'Space' || ev.key === ' ' || ev.key === 'Spacebar'){
+      pressed = ' ';
+      ev.preventDefault();
+    } else {
+      // normalized single character keys
+      const k = (ev.key || '').toLowerCase();
+      if(k.length === 1 && k >= 'a' && k <= 'z'){
+        pressed = k;
+      } else {
+        // ignore any other key
+        return;
+      }
     }
+
+    // if game locked (already won) ignore further keys
+    if(locked) {
+      showWarning('Game finished. Press Enter to restart.');
+      return;
+    }
+
+    // if no selection yet, accept any valid pressed key as start
+    if(selected === null){
+      selected = pressed;
+      moveCount = 1;
+      updateUI();
+      return;
+    }
+
+    // otherwise, pressed key must be one-step neighbor from selected
+    const allowed = getNeighbors(selected);
+    if(allowed.includes(pressed)){
+      selected = pressed;
+      moveCount += 1;
+      updateUI();
+    } else {
+      // not allowed move
+      showWarning(`Not allowed — you can only press one of: ${allowed.map(x=>x===' ' ? 'SPACE' : x.toUpperCase()).join(', ')}`);
+    }
+  });
+
+  // reveal and restart buttons
+  revealBtn.addEventListener('click', ()=> {
+    alert('Treasure is: ' + (treasure === ' ' ? 'SPACE' : treasure.toUpperCase()));
+  });
+  restartBtn.addEventListener('click', restartGame);
+
+  function restartGame(){
+    pickRandomTreasure();
+    selected = null;
+    moveCount = 0;
+    locked = false;
+    warningArea.innerHTML = '';
+    treasureHint.textContent = 'hidden';
+    centerKeyEl.style.transform = '';
+    colorPanel.style.transition = 'background-color .24s linear, box-shadow .24s ease';
+    updateUI();
   }
-});
 
-newBtn.addEventListener('click', startNewGame);
-revealBtn.addEventListener('click', ()=>{
-  alert('Treasure is at: ' + treasure.toUpperCase());
-});
+  // initialize
+  pickRandomTreasure();
+  updateUI();
 
-// initialize canvas and layout
-function setupCanvas(){
-  dpr = window.devicePixelRatio || 1;
-  canvasCtx = canvas.getContext('2d');
-}
+  // expose debug to console (optional)
+  window._topf = {
+    keyPos, keyList, getNeighbors, pickRandomTreasure
+  };
 
-function startNewGame(){
-  // reset styles
-  for(const k in keyElements){
-    keyElements[k].style.transform='';
-    keyElements[k].style.boxShadow='';
-  }
-  randomTreasure();
-  statusEl.classList.remove('win');
-  statusEl.style.background = '';
-}
-
-// adjust rendering on resize
-window.addEventListener('resize', ()=> {
-  renderColorsAndRings();
-});
-
-// build UI
-createKeyboard();
-setupCanvas();
-computeMaxDist();
-randomTreasure();
-renderColorsAndRings();
-updateStatus();
-
-// first selection highlight
-selectKey(selected);
-
+})();
 </script>
 </body>
 </html>
