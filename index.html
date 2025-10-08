@@ -83,8 +83,7 @@
 
       </div>
       <div style="text-align:right;color:var(--muted);font-size:13px">
-        Treasure: <strong id="treasureHint">hidden</strong><br/>
-        Moves: <strong id="moves">0</strong>
+        by jpqz
       </div>
     </header>
 
@@ -97,20 +96,12 @@
       </div>
 
       <aside class="side" aria-hidden="false">
-        
-          
-
           <div class="section">
             <div class="label">Allowed next keys (press one)</div>
             <div class="allowedRow" id="allowedRow">
               <!-- chips inserted here -->
             </div>
           </div>
-
-          
-        
-
-
       </aside>
     </main>
   </div>
@@ -158,9 +149,7 @@
   const centerKeyEl = document.getElementById('centerKey');
   const subTextEl = document.getElementById('subText');
   const allowedRowEl = document.getElementById('allowedRow');
-
   const colorPanel = document.getElementById('colorPanel');
-  const movesEl = document.getElementById('moves');
   const metaEl = document.getElementById('meta');
   
   // game state
@@ -205,14 +194,12 @@
 
   // update UI based on selected (last pressed)
   function updateUI(){
-    // moves count
-    movesEl.textContent = String(moveCount);
 
     // update last key display
     if(selected == null){
       centerKeyEl.textContent = '—';
       subTextEl.textContent = 'Press any key to choose a starting key.';
-      allowedRowEl.innerHTML = `<div class="chip">Any letter or Space</div>`;
+      allowedRowEl.innerHTML = `<div class="chip">Any letter</div>`;
       colorPanel.style.background = 'linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01))';
       metaEl.textContent = `Treasure: hidden`;
       return;
@@ -251,7 +238,6 @@
     if(selected === treasure){
       locked = true;
       // reveal and show celebration
-      treasureHint.textContent = selected.toUpperCase();
       showWin();
     }
   }
@@ -313,7 +299,6 @@
     selected = null;
     moveCount = 0;
     locked = false;
-    treasureHint.textContent = 'hidden';
     centerKeyEl.style.transform = '';
     colorPanel.style.transition = 'background-color .24s linear, box-shadow .24s ease';
     updateUI();
