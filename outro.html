@@ -36,12 +36,17 @@
   const text = `Oh thank you so much for finding all my stuff, now give it back to me...
   . . . . . .
 
-  You're not gonna give it back? Okay, well, you are leaving me no other choice.`;
+  You're not gonna give it back? Okay, well, you are leaving me no other choice.
+  I'll have hijack your keayboard to get back what's mine.
+`;
 
   const text2 = `
     Your Terminal:
-  >>$ Are you sure you want to delete all data? (y/n)
-  >>$ y`;
+  >>$ Are you sure you want to disable the keyboard? (y/n)
+  >>$ y
+  ...
+  keyboard has been disabled - press any key to undo.
+  `;
 
   const el = document.getElementById('type-text-out');
 
@@ -84,6 +89,9 @@
 
   // start typing first message
   type();
+  if (performance.getEntriesByType("navigation")[0].type === "reload") {
+    window.location.href = "index.html";
+  }
 </script>
 
 </body>
