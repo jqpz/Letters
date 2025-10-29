@@ -174,21 +174,9 @@
 /*outro from here*/
   #outro-screen {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: red;
-    color: white;
-    font-family: monospace;
-    padding: 40px;
+    padding: 60px;
+    inset: 0;
     z-index: 9999;
-    overflow-y: auto;
-
-    /* Center text */
-    display: flex;
-    justify-content: center;
-    align-items: center;
   }
 
   /* Hidden state */
@@ -202,6 +190,9 @@
  </style>
 </head>
 <body>
+  <div id="outro-screen">
+  <p id="type-text-out"></p>
+</div>
   <!-- Intro screen -->
 <div id="intro-screen">
   <p id="type-text"></p>
@@ -242,16 +233,14 @@
   <!-- Outro screen, starts hidden -->
 
 
-<div id="outro-screen" class = "hidden">
-  <p id="type-text-out"></p>
-</div>
+
 
 
 <script>
   const text = `Hello there!
   A long long time ago (probably last Monday) I, the coder, have been snooping around somewhere under your keyboard.
   Yes, yes I have been inside of your computer. But don't worry, I'll keep your files, well now they are our files, a secret. Surely....
-  But for now there are much more important things for you to worry about. While I was there, some stuff fell out of my pocket. And you surely don't want random things stuck below your keyboard, right? Right???
+  For now there are much more important things for you to worry about. While I was there, some stuff fell out of my pocket. And you surely don't want random things stuck below your keyboard, right? Right???
   So please go look for it. I'm busy.
   BUT a frrrriend told me that it's always a good starrrrt to searrrch forrrr the big rrred "X" ;)`;
 
@@ -284,6 +273,40 @@
     }
   });
 </script>
+
+<script>
+const text2 = `Oh thank you so much for finding my stuff!`;
+
+//const main = document.getElementById('main-screen');
+const el = document.getElementById('type-text-out');
+
+let j = 0;
+
+// Typing function
+function type2() {
+  if (j < text2.length) {
+    const char = text2[i];
+    el.innerHTML += (char === '\n') ? '<br>' : char;
+    j++;
+
+    let delay = 30;
+    if ('.!?'.includes(char)) delay = 400;
+    if (',;'.includes(char)) delay = 200;
+
+    setTimeout(type2, delay);
+  }
+}
+type2();           // start typing outro
+const outro = document.getElementById('outro-screen');
+// Show outro on "r" key press
+ocument.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 't') {
+      outro.classList.add('hidden'); // hide intro when "x" is pressed
+    }
+  });
+
+</script>
+
 
 <script> //js
 
@@ -487,43 +510,6 @@
   pickRandomTreasure();
   updateUI();
   })();
-</script>
-
-
-<script>
-const text2 = `Oh thank you so much for finding my stuff!`;
-const outro = document.getElementById('outro-screen');
-const main = document.getElementById('main-screen');
-const el = document.getElementById('type-text-out');
-
-let j = 0;
-
-// Typing function
-function type2() {
-  if (j < text2.length) {
-    const char = text2[i];
-    el.innerHTML += (char === '\n') ? '<br>' : char;
-    j++;
-
-    let delay = 30;
-    if ('.!?'.includes(char)) delay = 400;
-    if (',;'.includes(char)) delay = 200;
-
-    setTimeout(type2, delay);
-  }
-}
-type();
-// Show outro on "r" key press
-document.addEventListener('keydown', (e) => {
-  if (e.key.toLowerCase() === 'r') {
-    main.classList.add('hidden'); 
-    outro.classList.remove('hidden');
-    el.innerHTML = ''; // reset text
-    j = 0;             // reset index
-    type2();           // start typing outro
-  }
-});
-
 </script>
 
 
