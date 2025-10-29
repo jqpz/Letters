@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Treasure Hunt</title>
+
+
+<style>
+  /*outro from here*/
+   #outro-screen {
+    position: fixed;
+    padding: 60px;
+    color: limegreen;
+    inset: 0;
+    background: black;
+    z-index: 9999;
+  }
+
+  /* Hidden state */
+  #outro-screen.hidden {
+    display: none;
+  }
+  #type-text-out {
+    font-family: "Courier New", Courier, monospace;
+  }
+
+</style>
+
+</head>
+<body>
+  <div id="outro-screen">
+  <p id="type-text-out"></p>
+</div>
+
+<script>
+  const text = `Oh thank you so much for finding all my stuff, now give it back to me...
+  . . . . . .
+
+  You're not gonna give it back? Okay, well, you are leaving me no other choice.`;
+
+  const text2 = `
+    Your Terminal:
+  >>$ Are you sure you want to delete all data? (y/n)
+  >>$ y`;
+
+  const el = document.getElementById('type-text-out');
+
+  let i = 0;
+  let j = 0;
+
+  function type() {
+    if (i < text.length) {
+      const char = text[i];
+      el.innerHTML += (char === '\n') ? '<br>' : char;
+      i++;
+
+      let delay = 30;
+      if ('.!?'.includes(char)) delay = 400;
+      if (',;'.includes(char)) delay = 200;
+
+      setTimeout(type, delay);
+    } else {
+      // After finishing first text, wait a bit and start second
+      setTimeout(() => {el.innerHTML = '';type2();}, 1500);
+    }
+  }
+
+  function type2() {
+    if (j < text2.length) {
+      const char = text2[j];
+      el.innerHTML += (char === '\n') ? '<br>' : char;
+      j++;
+
+      let delay = 50;
+      if ('.!?'.includes(char)) delay = 400;
+      if (',;'.includes(char)) delay = 200;
+
+      setTimeout(type2, delay);
+    }
+    else {
+      setTimeout(() => {el.innerHTML = '';}, 5000);
+    }
+  }
+
+  // start typing first message
+  type();
+</script>
+
+</body>
+</html>

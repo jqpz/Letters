@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Treasure Hunt</title>
+
+<style>
+/*main from here*/
+
+    :root{
+       --muted:#9fbfe0; /*light gray text*/
+  }
+  #main-screen.hidden {
+    display: none;
+  }
+  #main-screen {
+    display: block;
+  }
+   html,body{ /*basic styling of the page*/
+      height:100%; /*fill entire screen*/
+      margin:0; /*edge too edge*/
+      font-family:system-ui,Arial; /*default system UI font, fall back to arial*/
+      background:linear-gradient(180deg,#051026,#082033); /*dark vertical gradient from top to bottom*/
+      color:#dff3ff; /*default text color (light blue/white)*/
+  }
+   .wrap{
+      margin:28px; /*adds 28px of space above and below*/
+      padding:22px; /*adds inner space between the container’s edge and its content*/
+      border-radius:16px; /*rounded courners*/
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      /*very subtle vertical gradientfrom top to bottom = 180deg,top starts slightly brighter (0.02 opacity white), bottom fades into a barely visible tone (0.01)*/
+      box-shadow:0 10px 40px rgba(2,6,23,.6);
+      /* deep drop shadow
+          0 → no horizontal offset
+          10px → downward offset
+          40px → blur radius
+          rgba(2,6,23,.6) → semi-transparent dark navy/black color*/
+  }
+   header{ /*formatting for header*/
+      display:flex; /*flexible spacing*/
+      align-items:center; /*vertical centered child elements*/
+      justify-content:space-between; /*space between title and by jpqz"*/
+      gap:12px
+  }
+   h1{ /*text formatting for all h1*/
+      margin:0;
+      font-size:20px
+  }
+   p.lead{ /*formatting for text paragraphs in class lead */
+      margin:6px 0 14px; /*shorthand margins: top-6px, right-0px, bottom-14px,left-0px*/
+      color:var(--muted);
+      font-size:14px
+  }
+   .game{
+       display:grid; /*grid based layout*/
+       grid-template-columns: 1fr 320px; /*one fractional unit of size for the color box and 320 px for the side bar*/
+       gap:18px; /*space between grid items*/
+      align-items:start; /*aligns items vertically to the top of each grid cell (*/
+  }
+  /* the big color panel */
+   .colorPanel{
+      height:360px;
+      border-radius:18px; /*curved edges*/
+      display:flex;/*flexible layout for different screen sizes*/
+      flex-direction:column; /* turns into columns when small screen */
+      align-items:center; /*internal elements are centered horizontally, e.g. the letter */
+      justify-content:center;/*internal elements are centered vertically, e.g. the letter */
+      position:relative; /*allows internal elements to be positiond absolute*/
+      overflow:hidden; /*hide anything that goes beyond the boarder*/
+      box-shadow: inset 0 8px 30px rgba(0,0,0,.45);
+  }
+   .centerKey{ /*big last pressed key symbol*/
+      font-size:92px;
+      font-weight:700;
+      letter-spacing:4px;
+      color:rgba(255,255,255,0.95);
+      text-shadow:0 8px 30px rgba(0,0,0,.5);
+  }
+   .sub{ /*text below - or found treasure*/
+      margin-top:8px;
+      color:rgba(255,255,255,0.9);
+      font-weight:200;
+      font-size:16px;
+  }
+   .meta{ /* moves/treasure hidden text */
+      position:absolute;
+      left:14px;
+      top:14px;
+      color:rgba(255,255,255,0.85);
+      font-weight:600;
+      font-size:13px;
+  }
+
+
+  /* side panel */
+   .side{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      padding:16px;
+      border-radius:12px;
+      height:360px;
+      box-shadow:0 6px 24px rgba(0,0,0,.45);
+      display:flex;
+      flex-direction:column;
+
+  }
+
+   .label{ /*formatting of "allowed next keys label"*/
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:8px
+  }
+   .allowedRow{ /*takes care of multiple neighbours in row*/
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px
+  }
+   .chip{ /*does boxes for neighbouring keys*/
+      padding:8px 12px;
+      border-radius:10px;
+      background:rgba(255,255,255,0.03);
+      font-weight:700;
+      min-width:44px;
+      text-align:center;
+  }
+
+   .controls{ /*does alignment when squeezed*/
+      display:flex;
+      gap:8px;
+      align-items:center
+  }
+
+   @media (max-width:900px){ /* adapt to small screen sizes */
+       .game{
+          grid-template-columns:1fr
+      }
+       .side{
+          height:auto
+      }
+       .colorPanel{
+          height:320px
+      }
+  }
+</style>
+</head>
+
+<body>
+  
+<!-- Main screen -->
+<div id="main-screen" class="wrap" role="application">
+    <header>
+      <div>
+        <h1>Let's go on a Treasure Hunt!</h1>
+        <p class="lead">Press any physical letter key to start. You must move one step at a time.</p>
+        <p class="lead"> The screen color will show how close your pressed key is located to the treasure. The more orange/red, the closer you are to the treasure, the more green/blue the further you are away from the treasure! </p>
+
+      </div>
+      <div style="text-align:right;color:var(--muted);font-size:13px">
+        by jqpz
+      </div>
+    </header>
+
+    <main class="game" id="game">
+      <div class="colorPanel" id="colorPanel">
+        <div class="meta" id="meta"></div>
+        <div class="centerKey" id="centerKey">—</div>
+        <div class="sub" id="subText">Press any letter key to choose a starting key.</div>
+      </div>
+
+      <aside class="side">
+            <div class="label">Allowed next keys (press one)</div>
+            <div class="allowedRow" id="allowedRow">
+              <!-- chips inserted here -->
+            </div>
+      </aside>
+    </main>
+  </div>
+
+<script> //js
+
+
+  (function(){
+  // QWERTY-like rows (letters). We include space as extra key.
+  const rows = [
+    ['q','w','e','r','t','y','u','i','o','p'],
+    ['a','s','d','f','g','h','j','k','l'],
+    ['z','x','c','v','b','n','m']
+  ];
+
+  // We'll create key positions in a 2D coordinate system (x = column + offset[row], y = row)
+  // Offsets approximate physical keyboard staggering
+  const rowOffsets = [0, 0.5, 1.0];
+
+  // Build key position map and list of valid keys (letters + space)
+  const keyPos = {};
+  const keyList = [];
+  rows.forEach((r, ry) => {
+    r.forEach((k, kx) => {
+      keyPos[k] = { x: kx + rowOffsets[ry], y: ry };
+      keyList.push(k);
+    });
+  });
+  
+  // compute maximum distance between any two keys (for normalization)
+  let maxDist = 1;
+  (function calcMax(){
+    let md = 0;
+    for(let a of keyList){
+      for(let b of keyList){
+        const pa = keyPos[a], pb = keyPos[b];
+        const d = Math.hypot(pa.x - pb.x, pa.y - pb.y);
+        if(d > md) md = d;
+      }
+    }
+    maxDist = md || 1;
+  })();
+
+  // DOM refs
+  const centerKeyEl = document.getElementById('centerKey');
+  const subTextEl = document.getElementById('subText');
+  const allowedRowEl = document.getElementById('allowedRow');
+  const colorPanel = document.getElementById('colorPanel');
+  const metaEl = document.getElementById('meta');
+  
+  // game state
+  let treasure = null;       // key that is treasure
+  let selected = null;       // current selected key (last pressed)
+  let moveCount = 0;
+  let locked = false;        // true after win until restart
+
+  // choose random treasure
+  function pickRandomTreasure(){
+    const idx = Math.floor(Math.random() * keyList.length);
+    treasure = keyList[idx];
+  }
+
+  // compute neighbors: one-step keys from 'k' (diagonals allowed)
+  function getNeighbors(k){
+    if(!keyPos[k]) return [];
+    const p = keyPos[k];
+    const neighbors = [];
+    for(const other of keyList){
+      if(other === k) continue;
+      const q = keyPos[other];
+      const dx = Math.abs(p.x - q.x);
+      const dy = Math.abs(p.y - q.y);
+      // threshold tuned to include direct and diagonal neighbors, include space where appropriate
+      // allow neighbors where Euclidean distance <= 1.45 (this captures adjacent keys)
+      if(Math.hypot(dx,dy) <= 1.45){
+        neighbors.push(other);
+      }
+    }
+    return neighbors;
+  }
+
+  // color mapping: distance -> hue (0 = red near, 220 = blue far)
+  function colorForDistance(dist){
+    const t = Math.min(1, Math.max(0, dist / maxDist));
+    const hue = (1 - t) * 0 + t * 220; // 0 (red) -> 220 (blue)
+    const sat = 72 + (1 - t) * 8;
+    const light = 52 - t * 6;
+    return `hsl(${hue} ${sat}% ${light}%)`;
+  }
+
+  // update UI based on selected (last pressed)
+  function updateUI(){
+
+    // update last key display
+    if(selected == null){
+      centerKeyEl.textContent = '—';
+      subTextEl.textContent = 'Press any key to choose a starting key.';
+      allowedRowEl.innerHTML = `<div class="chip">Any letter</div>`;
+      colorPanel.style.background = 'linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01))';
+      metaEl.textContent = `Treasure: hidden`;
+      return;
+    }
+
+    const disp = selected.toUpperCase();
+    centerKeyEl.textContent = disp;
+
+    // compute distance
+    const psel = keyPos[selected];
+    const pt = keyPos[treasure];
+    const dist = Math.hypot(psel.x - pt.x, psel.y - pt.y);
+
+    // color
+    const col = colorForDistance(dist);
+    colorPanel.style.background = `linear-gradient(180deg, ${col}, rgba(0,0,0,0.08))`;
+    colorPanel.style.boxShadow = `inset 0 8px 40px rgba(0,0,0,.45), 0 10px 40px rgba(0,0,0,.25)`;
+
+    subTextEl.textContent = ``;
+
+    // show allowed neighbors (one-step)
+    const neighbors = getNeighbors(selected);
+    allowedRowEl.innerHTML = '';
+    
+      for(const n of neighbors){
+        const chip = document.createElement('div');
+        chip.className = 'chip allowed';
+        chip.textContent = n.toUpperCase();
+        allowedRowEl.appendChild(chip);
+    }
+
+    // meta info
+    metaEl.textContent = `Moves: ${moveCount}`;
+
+    // win check
+    if(selected === treasure){
+      locked = true;
+      // reveal and show celebration
+      showWin();
+      setTimeout(() => { window.location.replace("outro.html");}, 3000);
+     
+    }
+  }
+
+  function showWin(){
+    colorPanel.style.background = 'linear-gradient(180deg, #ff4d4d, #ff0000)';
+    subTextEl.textContent = '🎉 You found the treasure! Press Enter to restart.';
+  }
+
+  // handle physical keyboard input
+  window.addEventListener('keydown', (ev)=>{
+    let pressed = null;
+
+    // ignore modifier keys
+    if(ev.metaKey || ev.altKey || ev.ctrlKey) return;
+
+    // restart on Enter
+    if(ev.key === 'Enter'){
+      ev.preventDefault();
+      restartGame();
+      return;
+    }
+
+    // normalized single character keys
+    const k = (ev.key || '').toLowerCase();
+    if(k.length === 1 && k >= 'a' && k <= 'z'){
+      pressed = k;
+    } else {
+      // ignore any other key
+      return;
+    }
+    
+
+    // if game locked (already won) ignore further keys
+    if(locked) {
+      showWarning('Game finished. Press Enter to restart.');
+      return;
+    }
+
+    // if no selectiohn yet, accept any valid pressed key as start
+    if(selected === null){
+      selected = pressed;
+      moveCount = 1;
+      updateUI();
+      return;
+    }
+
+    // otherwise, pressed key must be one-step neighbor from selected
+    const allowed = getNeighbors(selected);
+    if(allowed.includes(pressed)){
+      selected = pressed;
+      moveCount += 1;
+      updateUI();
+    }
+  });
+
+  function restartGame(){
+    pickRandomTreasure();
+    selected = null;
+    moveCount = 0;
+    locked = false;
+    centerKeyEl.style.transform = '';
+    colorPanel.style.transition = 'background-color .24s linear, box-shadow .24s ease';
+    updateUI();
+  }
+
+  // initialize
+  pickRandomTreasure();
+  updateUI();
+  })();
+</script>
+
+</body>
+</html>
