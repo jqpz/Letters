@@ -6,179 +6,254 @@
 
 
 <style> /*css*/
-#intro-screen {
-  position: fixed;
-  padding: 60px;
-  inset: 0;
-  z-index: 9999;
-  -webkit-animation: colorShift 4s infinite alternate ease-in-out;
-          animation: colorShift 4s infinite alternate ease-in-out;
-}
+/*intro*/
+  #intro-screen {
+    position: fixed;
+    padding: 60px;
+    inset: 0;
+    z-index: 9999;
+    -webkit-animation: colorShift 4s infinite alternate ease-in-out;
+            animation: colorShift 4s infinite alternate ease-in-out;
+  }
 
-@-webkit-keyframes colorShift {
-  0% { background-color: green; }
-  100% { background-color: red; }
-}
+  @-webkit-keyframes colorShift {
+    0% { background-color: forestgreen; }
+    100% { background-color: red; }
+  }
 
-@keyframes colorShift {
-  0% { background-color: green; }
-  100% { background-color: red; }
-}
+  @keyframes colorShift {
+    0% { background-color: forestgreen; }
+    100% { background-color: red; }
+  }
 
-#intro-screen.hidden {
-  display: none;
-}
-#type-text {
-  font-family: "Courier New", Courier, monospace;
-}
+  #intro-screen.hidden {
+    display: none;
+  }
 
-
-/*------main from here*/
-
-  :root{
-     --muted:#9fbfe0; /*light gray text*/
-}
- html,body{ /*basic styling of the page*/
-    height:100%; /*fill entire screen*/
-    margin:0; /*edge too edge*/
-    font-family:system-ui,Arial; /*default system UI font, fall back to arial*/
-    background:linear-gradient(180deg,#051026,#082033); /*dark vertical gradient from top to bottom*/
-    color:#dff3ff; /*default text color (light blue/white)*/
-}
- .wrap{
-    margin:28px; /*adds 28px of space above and below*/
-    padding:22px; /*adds inner space between the container’s edge and its content*/
-    border-radius:16px; /*rounded courners*/
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    /*very subtle vertical gradientfrom top to bottom = 180deg,top starts slightly brighter (0.02 opacity white), bottom fades into a barely visible tone (0.01)*/
-    box-shadow:0 10px 40px rgba(2,6,23,.6);
-    /* deep drop shadow
-        0 → no horizontal offset
-        10px → downward offset
-        40px → blur radius
-        rgba(2,6,23,.6) → semi-transparent dark navy/black color*/
-}
- header{ /*formatting for header*/
-    display:flex; /*flexible spacing*/
-    align-items:center; /*vertical centered child elements*/
-    justify-content:space-between; /*space between title and by jpqz"*/
-    gap:12px
-}
- h1{ /*text formatting for all h1*/
-    margin:0;
-    font-size:20px
-}
- p.lead{ /*formatting for text paragraphs in class lead */
-    margin:6px 0 14px; /*shorthand margins: top-6px, right-0px, bottom-14px,left-0px*/
-    color:var(--muted);
-    font-size:14px
-}
- .game{
-     display:grid; /*grid based layout*/
-     grid-template-columns: 1fr 320px; /*one fractional unit of size for the color box and 320 px for the side bar*/
-     gap:18px; /*space between grid items*/
-    align-items:start; /*aligns items vertically to the top of each grid cell (*/
-}
-/* the big color panel */
- .colorPanel{
-    height:360px;
-    border-radius:18px; /*curved edges*/
-    display:flex;/*flexible layout for different screen sizes*/
-    flex-direction:column; /* turns into columns when small screen */
-    align-items:center; /*internal elements are centered horizontally, e.g. the letter */
-    justify-content:center;/*internal elements are centered vertically, e.g. the letter */
-    position:relative; /*allows internal elements to be positiond absolute*/
-    overflow:hidden; /*hide anything that goes beyond the boarder*/
-    box-shadow: inset 0 8px 30px rgba(0,0,0,.45);
-}
- .centerKey{ /*big last pressed key symbol*/
-    font-size:92px;
-    font-weight:700;
-    letter-spacing:4px;
-    color:rgba(255,255,255,0.95);
-    text-shadow:0 8px 30px rgba(0,0,0,.5);
-}
- .sub{ /*text below - or found treasure*/
-    margin-top:8px;
-    color:rgba(255,255,255,0.9);
-    font-weight:200;
-    font-size:16px;
-}
- .meta{ /* moves/treasure hidden text */
-    position:absolute;
-    left:14px;
-    top:14px;
-    color:rgba(255,255,255,0.85);
-    font-weight:600;
-    font-size:13px;
-}
+  #type-text {
+    font-family: "Courier New", Courier, monospace;
+  }
 
 
-/* side panel */
- .side{
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    padding:16px;
-    border-radius:12px;
-    height:360px;
-    box-shadow:0 6px 24px rgba(0,0,0,.45);
-    display:flex;
-    flex-direction:column;
+/*main from here*/
 
-}
+    :root{
+       --muted:#9fbfe0; /*light gray text*/
+  }
+  #main-screen.hidden {
+    display: none;
+  }
+  #main-screen {
+    display: block;
+  }
+   html,body{ /*basic styling of the page*/
+      height:100%; /*fill entire screen*/
+      margin:0; /*edge too edge*/
+      font-family:system-ui,Arial; /*default system UI font, fall back to arial*/
+      background:linear-gradient(180deg,#051026,#082033); /*dark vertical gradient from top to bottom*/
+      color:#dff3ff; /*default text color (light blue/white)*/
+  }
+   .wrap{
+      margin:28px; /*adds 28px of space above and below*/
+      padding:22px; /*adds inner space between the container’s edge and its content*/
+      border-radius:16px; /*rounded courners*/
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      /*very subtle vertical gradientfrom top to bottom = 180deg,top starts slightly brighter (0.02 opacity white), bottom fades into a barely visible tone (0.01)*/
+      box-shadow:0 10px 40px rgba(2,6,23,.6);
+      /* deep drop shadow
+          0 → no horizontal offset
+          10px → downward offset
+          40px → blur radius
+          rgba(2,6,23,.6) → semi-transparent dark navy/black color*/
+  }
+   header{ /*formatting for header*/
+      display:flex; /*flexible spacing*/
+      align-items:center; /*vertical centered child elements*/
+      justify-content:space-between; /*space between title and by jpqz"*/
+      gap:12px
+  }
+   h1{ /*text formatting for all h1*/
+      margin:0;
+      font-size:20px
+  }
+   p.lead{ /*formatting for text paragraphs in class lead */
+      margin:6px 0 14px; /*shorthand margins: top-6px, right-0px, bottom-14px,left-0px*/
+      color:var(--muted);
+      font-size:14px
+  }
+   .game{
+       display:grid; /*grid based layout*/
+       grid-template-columns: 1fr 320px; /*one fractional unit of size for the color box and 320 px for the side bar*/
+       gap:18px; /*space between grid items*/
+      align-items:start; /*aligns items vertically to the top of each grid cell (*/
+  }
+  /* the big color panel */
+   .colorPanel{
+      height:360px;
+      border-radius:18px; /*curved edges*/
+      display:flex;/*flexible layout for different screen sizes*/
+      flex-direction:column; /* turns into columns when small screen */
+      align-items:center; /*internal elements are centered horizontally, e.g. the letter */
+      justify-content:center;/*internal elements are centered vertically, e.g. the letter */
+      position:relative; /*allows internal elements to be positiond absolute*/
+      overflow:hidden; /*hide anything that goes beyond the boarder*/
+      box-shadow: inset 0 8px 30px rgba(0,0,0,.45);
+  }
+   .centerKey{ /*big last pressed key symbol*/
+      font-size:92px;
+      font-weight:700;
+      letter-spacing:4px;
+      color:rgba(255,255,255,0.95);
+      text-shadow:0 8px 30px rgba(0,0,0,.5);
+  }
+   .sub{ /*text below - or found treasure*/
+      margin-top:8px;
+      color:rgba(255,255,255,0.9);
+      font-weight:200;
+      font-size:16px;
+  }
+   .meta{ /* moves/treasure hidden text */
+      position:absolute;
+      left:14px;
+      top:14px;
+      color:rgba(255,255,255,0.85);
+      font-weight:600;
+      font-size:13px;
+  }
 
- .label{ /*formatting of "allowed next keys label"*/
-    color:var(--muted);
-    font-size:13px;
-    margin-bottom:8px
-}
- .allowedRow{ /*takes care of multiple neighbours in row*/
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px
-}
- .chip{ /*does boxes for neighbouring keys*/
-    padding:8px 12px;
-    border-radius:10px;
-    background:rgba(255,255,255,0.03);
-    font-weight:700;
-    min-width:44px;
-    text-align:center;
-}
 
- .controls{ /*does alignment when squeezed*/
-    display:flex;
-    gap:8px;
-    align-items:center
-}
+  /* side panel */
+   .side{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      padding:16px;
+      border-radius:12px;
+      height:360px;
+      box-shadow:0 6px 24px rgba(0,0,0,.45);
+      display:flex;
+      flex-direction:column;
 
- @media (max-width:900px){ /* adapt to small screen sizes */
-     .game{
-        grid-template-columns:1fr
-    }
-     .side{
-        height:auto
-    }
-     .colorPanel{
-        height:320px
-    }
-}
+  }
+
+   .label{ /*formatting of "allowed next keys label"*/
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:8px
+  }
+   .allowedRow{ /*takes care of multiple neighbours in row*/
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px
+  }
+   .chip{ /*does boxes for neighbouring keys*/
+      padding:8px 12px;
+      border-radius:10px;
+      background:rgba(255,255,255,0.03);
+      font-weight:700;
+      min-width:44px;
+      text-align:center;
+  }
+
+   .controls{ /*does alignment when squeezed*/
+      display:flex;
+      gap:8px;
+      align-items:center
+  }
+
+   @media (max-width:900px){ /* adapt to small screen sizes */
+       .game{
+          grid-template-columns:1fr
+      }
+       .side{
+          height:auto
+      }
+       .colorPanel{
+          height:320px
+      }
+  }
+
+/*outro from here*/
+  #outro-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: red;
+    color: white;
+    font-family: monospace;
+    padding: 40px;
+    z-index: 9999;
+    overflow-y: auto;
+
+    /* Center text */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Hidden state */
+  #outro-screen.hidden {
+    display: none;
+  }
+  #type-text-out {
+    font-family: "Courier New", Courier, monospace;
+  }
+
  </style>
 </head>
 <body>
   <!-- Intro screen -->
 <div id="intro-screen">
   <p id="type-text"></p>
-
 </div>
+
+
+
+<!-- Main screen -->
+<div id="main-screen" class="wrap" role="application">
+    <header>
+      <div>
+        <h1>Let's go on a Treasure Hunt!</h1>
+        <p class="lead">Press any physical letter key to start. You must move one step at a time.</p>
+        <p class="lead"> The screen color will show how close your pressed key is located to the treasure. The more orange/red, the closer you are to the treasure, the more green/blue the further you are away from the treasure! </p>
+
+      </div>
+      <div style="text-align:right;color:var(--muted);font-size:13px">
+        by jqpz
+      </div>
+    </header>
+
+    <main class="game" id="game">
+      <div class="colorPanel" id="colorPanel">
+        <div class="meta" id="meta"></div>
+        <div class="centerKey" id="centerKey">—</div>
+        <div class="sub" id="subText">Press any letter key to choose a starting key.</div>
+      </div>
+
+      <aside class="side">
+            <div class="label">Allowed next keys (press one)</div>
+            <div class="allowedRow" id="allowedRow">
+              <!-- chips inserted here -->
+            </div>
+      </aside>
+    </main>
+  </div>
+  
+  <!-- Outro screen, starts hidden -->
+
+
+<div id="outro-screen" class = "hidden">
+  <p id="type-text-out"></p>
+</div>
+
 
 <script>
   const text = `Hello there!
-A long long time ago (probably last Monday) I, the coder, have hidden a secret treasure somewhere under your keyboard.
-Yes, yes I have been inside of your computer. But don't worry, I'll keep your files, well now they are our files, a secret. Surely....
-But now there are much more important things for you to worry about. I forgot where I hid the treasure.
-And you surely don't want random things stuck below your keyboard, right? Right???
-So please go look for it. I'm busy.
-BUT I've heard you can start by searching for the big red "X" ;)`;
+  A long long time ago (probably last Monday) I, the coder, have been snooping around somewhere under your keyboard.
+  Yes, yes I have been inside of your computer. But don't worry, I'll keep your files, well now they are our files, a secret. Surely....
+  But for now there are much more important things for you to worry about. While I was there, some stuff fell out of my pocket. And you surely don't want random things stuck below your keyboard, right? Right???
+  So please go look for it. I'm busy.
+  BUT a frrrriend told me that it's always a good starrrrt to searrrch forrrr the big rrred "X" ;)`;
 
   const el = document.getElementById('type-text');
   let i = 0;
@@ -210,40 +285,10 @@ BUT I've heard you can start by searching for the big red "X" ;)`;
   });
 </script>
 
-
-  <div class="wrap" role="application">
-    <header>
-      <div>
-        <h1>Let's go on a Treasure Hunt!</h1>
-        <p class="lead">Press any physical letter key to start. You must move one step at a time.</p>
-        <p class="lead"> The screen color will show how close your pressed key is located to the treasure. The more orange/red, the closer you are to the treasure, the more green/blue the further you are away from the treasure! </p>
-
-      </div>
-      <div style="text-align:right;color:var(--muted);font-size:13px">
-        by jqpz
-      </div>
-    </header>
-
-    <main class="game" id="game">
-      <div class="colorPanel" id="colorPanel">
-        <div class="meta" id="meta"></div>
-        <div class="centerKey" id="centerKey">—</div>
-        <div class="sub" id="subText">Press any letter key to choose a starting key.</div>
-      </div>
-
-      <aside class="side">
-            <div class="label">Allowed next keys (press one)</div>
-            <div class="allowedRow" id="allowedRow">
-              <!-- chips inserted here -->
-            </div>
-      </aside>
-    </main>
-  </div>
-
 <script> //js
 
 
-(function(){
+  (function(){
   // QWERTY-like rows (letters). We include space as extra key.
   const rows = [
     ['q','w','e','r','t','y','u','i','o','p'],
@@ -441,8 +486,48 @@ BUT I've heard you can start by searching for the big red "X" ;)`;
   // initialize
   pickRandomTreasure();
   updateUI();
-
-})();
+  })();
 </script>
+
+
+<script>
+const text2 = `Oh thank you so much for finding my stuff!`;
+const outro = document.getElementById('outro-screen');
+const main = document.getElementById('main-screen');
+const el = document.getElementById('type-text-out');
+
+let j = 0;
+
+// Typing function
+function type2() {
+  if (j < text2.length) {
+    const char = text2[i];
+    el.innerHTML += (char === '\n') ? '<br>' : char;
+    j++;
+
+    let delay = 30;
+    if ('.!?'.includes(char)) delay = 400;
+    if (',;'.includes(char)) delay = 200;
+
+    setTimeout(type2, delay);
+  }
+}
+type();
+// Show outro on "r" key press
+document.addEventListener('keydown', (e) => {
+  if (e.key.toLowerCase() === 'r') {
+    main.classList.add('hidden'); 
+    outro.classList.remove('hidden');
+    el.innerHTML = ''; // reset text
+    j = 0;             // reset index
+    type2();           // start typing outro
+  }
+});
+
+</script>
+
+
+
+
 </body>
 </html>
