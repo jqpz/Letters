@@ -6,6 +6,35 @@
 
 
 <style> /*css*/
+#intro-screen {
+  position: fixed;
+  padding: 60px;
+  inset: 0;
+  z-index: 9999;
+  -webkit-animation: colorShift 4s infinite alternate ease-in-out;
+          animation: colorShift 4s infinite alternate ease-in-out;
+}
+
+@-webkit-keyframes colorShift {
+  0% { background-color: green; }
+  100% { background-color: red; }
+}
+
+@keyframes colorShift {
+  0% { background-color: green; }
+  100% { background-color: red; }
+}
+
+#intro-screen.hidden {
+  display: none;
+}
+#type-text {
+  font-family: "Courier New", Courier, monospace;
+}
+
+
+/*------main from here*/
+
   :root{
      --muted:#9fbfe0; /*light gray text*/
 }
@@ -136,6 +165,52 @@
  </style>
 </head>
 <body>
+  <!-- Intro screen -->
+<div id="intro-screen">
+  <p id="type-text"></p>
+
+</div>
+
+<script>
+  const text = `Hello there!
+A long long time ago (probably last Monday) I, the coder, have hidden a secret treasure somewhere under your keyboard.
+Yes, yes I have been inside of your computer. But don't worry, I'll keep your files, well now they are our files, a secret. Surely....
+But now there are much more important things for you to worry about. I forgot where I hid the treasure.
+And you surely don't want random things stuck below your keyboard, right? Right???
+So please go look for it. I'm busy.
+BUT I've heard you can start by searching for the big red "X" ;)`;
+
+  const el = document.getElementById('type-text');
+  let i = 0;
+
+  function type() {
+    if (i < text.length) {
+      const char = text[i];
+      el.innerHTML += (char === '\n') ? '<br>' : char;
+      i++;
+
+      // Base typing speed
+      let delay = 30;
+
+      // Add pauses for punctuation
+      if ('.!?'.includes(char)) delay = 400;
+      if (',;'.includes(char)) delay = 200;
+
+      setTimeout(type, delay);
+    }
+  }
+
+  type();
+  const intro = document.getElementById('intro-screen');
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'x') {
+      intro.classList.add('hidden'); // hide intro when "x" is pressed
+    }
+  });
+</script>
+
+
   <div class="wrap" role="application">
     <header>
       <div>
