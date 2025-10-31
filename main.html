@@ -10,7 +10,7 @@
     font-family: "Courier New", Courier, monospace;
     height: 100%;
     margin: 0;
-    background: darkslategrey;
+    background: black;
     transition: background 0.4s ease;
   }
   #author {
@@ -189,7 +189,7 @@
       const pt = keyPos[treasure];
       const dist = Math.hypot(psel.x - pt.x, psel.y - pt.y);
       const col = colorForDistance(dist);
-      document.body.style.background = `linear-gradient(0deg, ${col}, darkslategrey`;
+      document.body.style.background = `linear-gradient(0deg, ${col}, black`;
     }
     const centerEl = document.getElementById('centerKey');
     const neighborsContainer = document.getElementById('neighbors-container');
@@ -244,7 +244,7 @@
         locked = true;
         // optional celebration
         clearInterval(timerInterval);       // stop the timer
-        setTimeout(() => { window.location.replace("outro.html");}, 3000);
+        //setTimeout(() => { window.location.replace("outro.html");}, 3000);
       }
     });
     })();

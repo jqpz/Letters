@@ -34,6 +34,15 @@
 
 
 <script>
+
+  const asciiArt = `
+   .----.   . - .
+   |C>_.|.:' .:.  .
+ __|____|__ \`:.  O_/
+|  ______--|   \\/M
+\`-/.::::.\\-'   _/ \\_
+ \`--------'\n\n`;
+
   const text = `Oh thank you so much for finding all my stuff, now give it back to me...
   . . . . . .
 
@@ -51,6 +60,7 @@
 
   const el = document.getElementById('type-text-out');
 
+  el.innerHTML = `<pre>${asciiArt}</pre>`;
   let i = 0;
   let j = 0;
 
