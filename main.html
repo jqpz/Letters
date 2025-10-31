@@ -114,13 +114,6 @@
     }, 80);
 
     // Count moves when any key is pressed
-    window.addEventListener('keydown', (e) => {
-      if (locked) return; // ignore further input
-      if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
-        moveCount++;
-        moveEl.textContent = moveCount;
-      }
-    });
 
   // center Key
 
@@ -244,7 +237,7 @@
         locked = true;
         // optional celebration
         clearInterval(timerInterval);       // stop the timer
-        //setTimeout(() => { window.location.replace("outro.html");}, 3000);
+        setTimeout(() => { window.location.replace("outro.html");}, 3000);
       }
     });
     })();
