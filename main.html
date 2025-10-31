@@ -18,7 +18,7 @@
     bottom: 12px;         /* distance from bottom */
     right: 12px;          /* distance from right */
     font-size: 13px;
-    color: floralwhite;/*rgba(255,255,255,0.7);*/
+    color: floralwhite;/*rgba(255,255,255,0.7);*/s
   }
   #stats {
     position: fixed;
@@ -39,6 +39,22 @@
     font-size: 120px;
     font-weight: 300;
     color: floralwhite;
+  }
+  #neighbors-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  z-index: 5;
+  }
+
+  .neighbor {
+    position: absolute;
+    font-size: 32px;
+    font-weight: 400;
+    color: floralwhite;
+    transform: translate(-50%, -50%);
   }
 
 </style>
@@ -62,6 +78,7 @@
   </div>
 
   <div id="centerKey">—</div>
+  <div id="neighbors-container"></div>
 
 
 <script>
@@ -171,7 +188,28 @@
       document.body.style.background = `linear-gradient(0deg, ${col}, darkslategrey`;
     }
     const centerEl = document.getElementById('centerKey');
+    const neighborsContainer = document.getElementById('neighbors-container');
 
+    function showNeighbors(centerKey) {
+      const neighbors = getNeighbors(centerKey);
+      neighborsContainer.innerHTML = '';
+
+      const centerPos = keyPos[centerKey];
+      const scale = 100; // pixels per unit offset
+      neighbors.forEach(n => {
+        const pos = keyPos[n];
+        const dx = (pos.x - centerPos.x) * scale;
+        const dy = (pos.y - centerPos.y) * scale;
+
+        const div = document.createElement('div');
+        div.className = 'neighbor';
+        div.style.left = `${dx}px`;
+        div.style.top = `${dy}px`;
+        div.textContent = n.toUpperCase();
+
+        neighborsContainer.appendChild(div);
+      });
+    }
 
     // Handle key presses
     window.addEventListener('keydown', (ev) => {
@@ -182,12 +220,14 @@
         // First key pressed: allow any
         selected = k;
         centerEl.textContent = k.toUpperCase();
+        showNeighbors(selected);
       } else {
         // Only allow neighbors
         const allowed = getNeighbors(selected);
         if (!allowed.includes(k)) return; // invalid key, ignore
         selected = k;
         centerEl.textContent = k.toUpperCase();
+        showNeighbors(selected);
       }
 
       moveCount++;            // increment moves
