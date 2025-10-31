@@ -2,24 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>Treasure Hunt</title>
+<title>Hello there!</title>
 
 
 <style> /*css*/
-/*intro*/
+  /*intro*/
   #intro-screen {
     position: fixed;
     padding: 60px;
     inset: 0;
     color: white;
     z-index: 9999;
+      background:
+    linear-gradient(to bottom, darkslategrey, transparent),
+    var(--animated-color, forestgreen);
+
+  --animated-color: forestgreen;
     -webkit-animation: colorShift 4s infinite alternate ease-in-out;
             animation: colorShift 4s infinite alternate ease-in-out;
-  }
-
-  @-webkit-keyframes colorShift {
-    0% { background-color: forestgreen; }
-    100% { background-color: red; }
   }
 
   @keyframes colorShift {
@@ -34,22 +34,16 @@
   #type-text {
     font-family: "Courier New", Courier, monospace;
   }
+</style>
 
 
-
-
- </style>
 </head>
 <body>
+
   <!-- Intro screen -->
 <div id="intro-screen">
   <p id="type-text"></p>
 </div>
-
-
-
-
-
 
 
 <script>
@@ -89,6 +83,7 @@
     }
   });
 </script>
+
 
 </body>
 </html>

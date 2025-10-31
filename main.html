@@ -19,7 +19,6 @@
     right: 12px;          /* distance from right */
     font-size: 13px;
     color: floralwhite;/*rgba(255,255,255,0.7);*/
-    user-select: none;
   }
   #stats {
     position: fixed;
@@ -151,12 +150,12 @@
       const q = keyPos[other];
       return Math.hypot(p.x - q.x, p.y - q.y) <= 1.45;
     });
-  }
+    }
 
-    // Distance-based color
+    // color mapping: distance -> hue (0 = red near, 220 = blue far)
     function colorForDistance(dist){
       const t = Math.min(1, Math.max(0, dist / maxDist));
-      const hue = (1 - t) * 0 + t * 220; // 0=red (close), 220=blue (far)
+      const hue = (1 - t) * 0 + t * 220; // 0 (red) -> 220 (blue)
       const sat = 72 + (1 - t) * 8;
       const light = 52 - t * 6;
       return `hsl(${hue} ${sat}% ${light}%)`;
