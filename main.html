@@ -32,6 +32,16 @@
     z-index: 10;
     color: floralwhite;
   }
+  #centerKey {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 120px;
+    font-weight: 300;
+    color: floralwhite;
+  }
+
 </style>
 
 
@@ -51,6 +61,8 @@
       <div class="label">Time: </div>
       <div class="value" id="timer">00:00:00</div>
   </div>
+
+  <div id="centerKey">—</div>
 
 
 <script>
@@ -90,72 +102,101 @@
       }
     });
 
+  // center Key
+
+
   //background
     (function() {
-  // QWERTY keyboard layout
-  const rows = [
-    ['q','w','e','r','t','y','u','i','o','p'],
-    ['a','s','d','f','g','h','j','k','l'],
-    ['z','x','c','v','b','n','m']
-  ];
-  const rowOffsets = [0, 0.5, 1.0];
-  const keyPos = {};
-  const keyList = [];
+    // QWERTY keyboard layout
+    const rows = [
+      ['q','w','e','r','t','y','u','i','o','p'],
+      ['a','s','d','f','g','h','j','k','l'],
+      ['z','x','c','v','b','n','m']
+    ];
+    const rowOffsets = [0, 0.5, 1.0];
+    const keyPos = {};
+    const keyList = [];
 
-  // Assign 2D coordinates to each key
-  rows.forEach((r, ry) => {
-    r.forEach((k, kx) => {
-      keyPos[k] = { x: kx + rowOffsets[ry], y: ry };
-      keyList.push(k);
+    // Assign 2D coordinates to each key
+    rows.forEach((r, ry) => {
+      r.forEach((k, kx) => {
+        keyPos[k] = { x: kx + rowOffsets[ry], y: ry };
+        keyList.push(k);
+      });
     });
-  });
 
-  // Compute maximum distance between any two keys
-  let maxDist = 1;
-  (function calcMax(){
-    let md = 0;
-    for(let a of keyList){
-      for(let b of keyList){
-        const pa = keyPos[a], pb = keyPos[b];
-        const d = Math.hypot(pa.x - pb.x, pa.y - pb.y);
-        if(d > md) md = d;
+    // Compute maximum distance between any two keys
+    let maxDist = 1;
+    (function calcMax(){
+      let md = 0;
+      for(let a of keyList){
+        for(let b of keyList){
+          const pa = keyPos[a], pb = keyPos[b];
+          const d = Math.hypot(pa.x - pb.x, pa.y - pb.y);
+          if(d > md) md = d;
+        }
       }
-    }
-    maxDist = md || 1;
-  })();
+      maxDist = md || 1;
+    })();
 
-  // Random treasure
-  let treasure = keyList[Math.floor(Math.random() * keyList.length)];
-  let selected = null;
+    // Random treasure
+    let treasure = keyList[Math.floor(Math.random() * keyList.length)];
+    let selected = null;
 
-  // Distance-based color
-  function colorForDistance(dist){
-    const t = Math.min(1, Math.max(0, dist / maxDist));
-    const hue = (1 - t) * 0 + t * 220; // 0=red (close), 220=blue (far)
-    const sat = 72 + (1 - t) * 8;
-    const light = 52 - t * 6;
-    return `hsl(${hue} ${sat}% ${light}%)`;
+    function getNeighbors(k){
+    if(!keyPos[k]) return [];
+    const p = keyPos[k];
+    return keyList.filter(other => {
+      if(other === k) return false;
+      const q = keyPos[other];
+      return Math.hypot(p.x - q.x, p.y - q.y) <= 1.45;
+    });
   }
 
-  // Update background color
-  function updateColor() {
-    if (!selected) return;
-    const psel = keyPos[selected];
-    const pt = keyPos[treasure];
-    const dist = Math.hypot(psel.x - pt.x, psel.y - pt.y);
-    const col = colorForDistance(dist);
-    document.body.style.background = `linear-gradient(0deg, ${col}, darkslategrey`;
-  }
-
-  // Handle key presses
-  window.addEventListener('keydown', (ev) => {
-    const k = (ev.key || '').toLowerCase();
-    if (k.length === 1 && k >= 'a' && k <= 'z') {
-      selected = k;
-      updateColor();
+    // Distance-based color
+    function colorForDistance(dist){
+      const t = Math.min(1, Math.max(0, dist / maxDist));
+      const hue = (1 - t) * 0 + t * 220; // 0=red (close), 220=blue (far)
+      const sat = 72 + (1 - t) * 8;
+      const light = 52 - t * 6;
+      return `hsl(${hue} ${sat}% ${light}%)`;
     }
-  });
-})();
+
+    // Update background color
+    function updateColor() {
+      if (!selected) return;
+      const psel = keyPos[selected];
+      const pt = keyPos[treasure];
+      const dist = Math.hypot(psel.x - pt.x, psel.y - pt.y);
+      const col = colorForDistance(dist);
+      document.body.style.background = `linear-gradient(0deg, ${col}, darkslategrey`;
+    }
+    const centerEl = document.getElementById('centerKey');
+
+
+    // Handle key presses
+    window.addEventListener('keydown', (ev) => {
+      const k = (ev.key || '').toLowerCase();
+      if (k.length !== 1 || k < 'a' || k > 'z') return;
+
+      if (selected === null) {
+        // First key pressed: allow any
+        selected = k;
+        centerEl.textContent = k.toUpperCase();
+      } else {
+        // Only allow neighbors
+        const allowed = getNeighbors(selected);
+        if (!allowed.includes(k)) return; // invalid key, ignore
+        selected = k;
+        centerEl.textContent = k.toUpperCase();
+      }
+
+      moveCount++;            // increment moves
+      moveEl.textContent = moveCount;
+
+      updateColor();          // update background & UI
+    });
+    })();
 
   
 </script>
