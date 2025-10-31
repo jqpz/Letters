@@ -82,6 +82,7 @@
 
 
 <script>
+  let locked = false; // game state
 
   //stats
 
@@ -104,14 +105,17 @@
       return `${mm}:${ss}:${cs}`;
     }
 
-    // Timer updates every 10 ms
-    setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      timerEl.textContent = formatTime(elapsed);
+    // Timer updates every 80 ms
+     const timerInterval = setInterval(() => {
+      if (!locked) {
+        const elapsed = Date.now() - startTime;
+        timerEl.textContent = formatTime(elapsed);
+      }
     }, 80);
 
     // Count moves when any key is pressed
     window.addEventListener('keydown', (e) => {
+      if (locked) return; // ignore further input
       if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
         moveCount++;
         moveEl.textContent = moveCount;
@@ -193,6 +197,7 @@
     function showNeighbors(centerKey) {
       const neighbors = getNeighbors(centerKey);
       neighborsContainer.innerHTML = '';
+      if (centerKey === treasure) return;
 
       const centerPos = keyPos[centerKey];
       const scale = 100; // pixels per unit offset
@@ -208,11 +213,12 @@
         div.textContent = n.toUpperCase();
 
         neighborsContainer.appendChild(div);
-      });
-    }
+      });}
 
     // Handle key presses
     window.addEventListener('keydown', (ev) => {
+      if (locked) return; // ignore further input
+
       const k = (ev.key || '').toLowerCase();
       if (k.length !== 1 || k < 'a' || k > 'z') return;
 
@@ -234,6 +240,12 @@
       moveEl.textContent = moveCount;
 
       updateColor();          // update background & UI
+      if (selected === treasure) {
+        locked = true;
+        // optional celebration
+        clearInterval(timerInterval);       // stop the timer
+        setTimeout(() => { window.location.replace("outro.html");}, 3000);
+      }
     });
     })();
 
