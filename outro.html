@@ -34,7 +34,8 @@
 
 
 <script>
-
+  const moves = sessionStorage.getItem('moveCount') || '???';
+  const time = sessionStorage.getItem('timeElapsed') || '??:??:??';
   const asciiArt = `
    .----.   . - .
    |C>_.|.:' .:.  .
@@ -43,11 +44,11 @@
 \`-/.::::.\\-'   _/ \\_
  \`--------'\n\n`;
 
-  const text = `Oh thank you so much for finding all my stuff, now give it back to me...
+  const text = `Oh thank you so much for finding my stuff and you only needed ${moves} moves and ${time}! Good job buddy, now give it back to me...
   . . . . . .
 
   You're not gonna give it back? Okay, well, you are leaving me no other choice.
-  I'll have hijack your keayboard to get back what's mine.
+  I'll have hijack your keyboard to get back what's mine.
   `;
 
   const text2 = `

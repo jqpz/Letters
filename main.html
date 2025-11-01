@@ -31,6 +31,17 @@
     z-index: 10;
     color: floralwhite;
   }
+  #centerMessage {
+    position: fixed;
+    top: 10%; /* slightly above the center key */
+    padding: 80px;
+    font-size: 24px;
+    font-weight: 400;
+    color: floralwhite;
+    z-index: 10;
+    text-align: left;
+  }
+
   #centerKey {
     position: fixed;
     top: 50%;
@@ -77,6 +88,7 @@
       <div class="value" id="timer">00:00:00</div>
   </div>
 
+  <div id="centerMessage">You can start searching anywhere!</div>
   <div id="centerKey">—</div>
   <div id="neighbors-container"></div>
 
@@ -184,8 +196,43 @@
       const col = colorForDistance(dist);
       document.body.style.background = `linear-gradient(0deg, ${col}, black`;
     }
+
+    const messageEl = document.getElementById('centerMessage');
     const centerEl = document.getElementById('centerKey');
     const neighborsContainer = document.getElementById('neighbors-container');
+
+    let typingTimeout; // track ongoing typing
+
+    function typeMessage(message) {
+      clearTimeout(typingTimeout);       // stop previous typing if any
+      messageEl.innerHTML = '';           // clear previous text
+
+      let i = 0;
+
+      function typeChar() {
+        if (i < message.length) {
+          const char = message[i];
+          messageEl.innerHTML += char;
+          i++;
+
+          let delay = 60;                // base speed
+          if ('.!?'.includes(char)) delay = 300;
+          if (',;'.includes(char)) delay = 150;
+
+          typingTimeout = setTimeout(typeChar, delay);
+        }
+      }
+
+      typeChar();
+    }
+
+
+    function distanceToTreasure(k) {
+      if (!keyPos[k]) return Infinity;
+      const p = keyPos[k];
+      const t = keyPos[treasure];
+      return Math.hypot(p.x - t.x, p.y - t.y);
+    }
 
     function showNeighbors(centerKey) {
       const neighbors = getNeighbors(centerKey);
@@ -212,18 +259,41 @@
     window.addEventListener('keydown', (ev) => {
       if (locked) return; // ignore further input
 
+
+
       const k = (ev.key || '').toLowerCase();
       if (k.length !== 1 || k < 'a' || k > 'z') return;
+
+      //if dist(selected )< dist (k) -> display centermessage as (colder!)
+       //if dist(selected )= dist (k) -> clear center message
+       //if dist(selected )< dist (k) -> display centermessage as (warmer!)
+
+      //if k != neighbours of selected -> display center message as (woah! that's a big jump, i can't jump that far, try smaller steps)
 
       if (selected === null) {
         // First key pressed: allow any
         selected = k;
         centerEl.textContent = k.toUpperCase();
         showNeighbors(selected);
+        typeMessage('Interesting choice...'); // optional: clear message
       } else {
         // Only allow neighbors
         const allowed = getNeighbors(selected);
-        if (!allowed.includes(k)) return; // invalid key, ignore
+        if (!allowed.includes(k)) {
+          if(k!= selected) {typeMessage("Woah! That's a big jump, try smaller steps!");}
+          return; // don't move
+        } // invalid key, ignore
+
+        const prevDist = distanceToTreasure(selected);
+        const newDist = distanceToTreasure(k);
+
+        if (newDist < prevDist) {
+          typeMessage("Warmer!");
+        } else if (newDist > prevDist) {
+          typeMessage("Colder!");
+        } else {
+          typeMessage("Nah, still the same."); // same distance, clear message
+        }
         selected = k;
         centerEl.textContent = k.toUpperCase();
         showNeighbors(selected);
@@ -235,14 +305,18 @@
       updateColor();          // update background & UI
       if (selected === treasure) {
         locked = true;
-        // optional celebration
+        typeMessage("Oh there it is! My screwdriver! Oh and my snacks!");// optional celebration
         clearInterval(timerInterval);       // stop the timer
-        setTimeout(() => { window.location.replace("outro.html");}, 3000);
+            sessionStorage.setItem('moveCount', moveCount);
+            sessionStorage.setItem('timeElapsed', timerEl.textContent); // formatted time
+        setTimeout(() => { window.location.replace("outro.html");}, 5100);
       }
     });
     })();
 
-  
+      if (performance.getEntriesByType("navigation")[0].type === "reload") {
+    window.location.href = "index.html";
+  }
 </script>
 
 
